@@ -120,6 +120,13 @@ input[type=text],input[type=number]{background:#132824;border:1px solid var(--li
 .cell.zero{color:var(--muted)}
 .cell.num{border-color:var(--yellow);color:var(--yellow);background:rgba(255,210,63,.1)}
 .cell.nb{border-color:var(--cyan);color:var(--cyan);background:rgba(98,219,227,.1)}
+.cell.pc0,.mdig.pc0{border-color:var(--yellow);color:var(--yellow);background:rgba(255,210,63,.12)}
+.cell.pc1,.mdig.pc1{border-color:var(--cyan);color:var(--cyan);background:rgba(98,219,227,.12)}
+.cell.pc2,.mdig.pc2{border-color:var(--coral);color:var(--coral);background:rgba(255,107,91,.12)}
+.cell.pc3,.mdig.pc3{border-color:var(--ok);color:var(--ok);background:rgba(134,224,143,.12)}
+.cell.pc4,.mdig.pc4{border-color:var(--blue);color:var(--blue);background:rgba(122,167,255,.12)}
+.mdig{display:inline-block;min-width:1.2em;padding:0 3px;border-radius:6px;border:2px solid transparent;margin:0 1px}
+.pill.pp0{color:var(--yellow)}.pill.pp1{color:var(--cyan)}.pill.pp2{color:var(--coral)}.pill.pp3{color:var(--ok)}.pill.pp4{color:var(--blue)}
 .cell.cur{border:2px dashed var(--chalk);animation:blink 1.2s infinite}
 .cell.done{color:var(--ok)}
 .cell .cap{position:absolute;top:-18px;font-size:.62rem;font-family:var(--f-body);font-weight:700;letter-spacing:.05em;text-transform:uppercase}
@@ -375,6 +382,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
           </div>
           <div class="row">
             <input type="number" id="customN" placeholder="Il tuo numero" min="1" max="99999999" style="width:140px" aria-label="Scegli il numero da moltiplicare">
+            <input type="number" id="customM" placeholder="× quanto" min="10" max="999999" style="width:110px;display:none" aria-label="Scegli il moltiplicatore">
             <button class="btn sm ghost" id="useN">Usa</button>
             <button class="btn sm" id="newN">Nuovo numero</button>
           </div>
@@ -532,7 +540,7 @@ function expr(m,num,nb,pos){
     case 3:return pos==='first'?`2×(10 − ${num})${five}`:pos==='middle'?`2×(9 − ${num})${five} + ${met}`:`${met} − 2`;
   }
 }
-function solve(n,m){
+function solveSingle(n,m){
   const s='0'+String(n),L=s.length,steps=[];let carry=0,out='';
   for(let i=L-1;i>=0;i--){
     const num=+s[i],nb=i+1<L?+s[i+1]:0,pos=i===L-1?'first':(i===0?'last':'middle');
@@ -543,6 +551,20 @@ function solve(n,m){
   if(carry>0){steps.push({final:true,w:carry,i:-1});out=carry+out;}
   return {s,steps,result:out.replace(/^0+(?=\d)/,'')};
 }
+const SINGLE=[2,3,4,5,6,7,8,9,11,12];
+function solveDirect(n,m){
+  const ms=String(m),k=ms.length,s='0'.repeat(k)+String(n),L=s.length,steps=[];let carry=0;
+  for(let r=0;r<L;r++){
+    const i=L-1-r,pairs=[];
+    for(let j=0;j<k&&j<=r;j++){const ai=L-1-(r-j),bj=k-1-j;pairs.push({ai,bj,a:+s[ai],b:+ms[bj]})}
+    const prods=pairs.map(p=>p.a*p.b),raw=prods.reduce((x,y)=>x+y,0),tot=raw+carry,w=tot%10,c=Math.floor(tot/10);
+    const ex=pairs.map(p=>`${p.a}×${p.b}`).join(' + ')+(pairs.length>1?` = ${prods.join(' + ')}`:'');
+    steps.push({direct:true,i,pairs,raw,cin:carry,tot,w,c,ex});carry=c;
+  }
+  while(steps.length>1&&steps[steps.length-1].tot===0)steps.pop();
+  return {s,steps,direct:true,k,result:steps.map(x=>x.w).reverse().join('').replace(/^0+(?=\d)/,'')};
+}
+function solve(n,m){return SINGLE.includes(+m)?solveSingle(n,+m):solveDirect(n,m)}
 function stepText(st){
   if(st.final)return `Riporto rimasto → scrivo ${st.w} davanti`;
   let t=`${st.ex} = ${st.raw}`;
@@ -553,7 +575,7 @@ function stepText(st){
 }
 
 /* ================= DATI DELLE REGOLE ================= */
-const ORDER=[11,12,6,7,5,9,8,4,3,2];
+const ORDER=[11,12,6,7,5,9,8,4,3,2,'x2','x3','xn'];
 const TECH={
  11:{d:'Somma il vicino',rules:[['Ogni passo','cifra + vicino']]},
  12:{d:'Raddoppia e somma il vicino',rules:[['Ogni passo','doppio della cifra + vicino']]},
@@ -564,8 +586,20 @@ const TECH={
  8:{d:'Come il 9, ma raddoppi',rules:[['Primo passo, a destra','(10 − cifra) × 2'],['Passi centrali','(9 − cifra) × 2 + vicino'],['Ultimo passo, sotto lo zero','prima cifra a sinistra − 2']]},
  4:{d:'Da 10 e da 9, metà del vicino',rules:[['Primo passo, a destra','10 − cifra, +5 se dispari'],['Passi centrali','9 − cifra + metà del vicino, +5 se dispari'],['Ultimo passo, sotto lo zero','metà della prima cifra a sinistra − 1']]},
  3:{d:'Come il 4, ma raddoppi',rules:[['Primo passo, a destra','(10 − cifra) × 2, +5 se dispari'],['Passi centrali','(9 − cifra) × 2 + metà del vicino, +5 se dispari'],['Ultimo passo, sotto lo zero','metà della prima cifra a sinistra − 2']]},
- 2:{d:'Raddoppia ogni cifra',rules:[['Ogni passo','doppio della cifra (il vicino non serve)']]}
+ 2:{d:'Raddoppia ogni cifra',rules:[['Ogni passo','doppio della cifra (il vicino non serve)']]},
+ x2:{d:'Coppia esterna + coppia interna',rules:[['Prima','scrivi 2 zeri davanti al numero'],['Primo passo, a destra','unità × unità del moltiplicatore'],['Ogni passo dopo','coppia esterna (cifra sopra × ultima cifra del moltiplicatore) + coppia interna (le due cifre appena più dentro)'],['Riporto','può essere anche più di 9: portalo tutto al passo dopo']]},
+ x3:{d:'Tre coppie: esterna, centrale, interna',rules:[['Prima','scrivi 3 zeri davanti al numero'],['Ogni passo','coppia esterna (cifra sopra × ultima cifra del moltiplicatore) + coppia centrale + coppia interna, spostandoti verso l\'interno'],['Coppie con lo zero','zero per qualsiasi cifra fa zero: salta il conto'],['Riporto','può essere anche più di 9: portalo tutto al passo dopo']]},
+ xn:{d:'Una coppia per ogni cifra del moltiplicatore',rules:[['Prima','scrivi tanti zeri davanti quante sono le cifre del moltiplicatore'],['Ogni passo','somma tutte le coppie: la cifra sopra con l\'ultima del moltiplicatore, poi verso l\'interno, una coppia per cifra'],['Consiglio','usa le dita per non perdere il segno: una coppia alla volta'],['Riporto','può essere anche più di 9: portalo tutto al passo dopo']]}
 };
+const MULTI={x2:{k:[2,2],label:'× 2 cifre'},x3:{k:[3,3],label:'× 3 cifre'},xn:{k:[4,5],label:'× N cifre'}};
+const isMulti=t=>typeof t==='string'&&!!MULTI[t];
+const tLabel=t=>isMulti(t)?MULTI[t].label:'× '+t;
+const pT=v=>isNaN(+v)?v:+v;
+const DIFFM={facile:[2,2],medio:[2,3],difficile:[3,4]};
+function genMult(rng,t,diff){if(!isMulti(t))return t;const [a,b]=MULTI[t].k,d=a+Math.floor(rng()*(b-a+1)),hi=diff==='facile'?4:9;let m;
+  do{m='';for(let i=0;i<d;i++)m+=1+Math.floor(rng()*hi);m=+m}while(m===11||m===12);return m}
+function genProblem(rng,t,diff){const m=genMult(rng,t,diff),[a,b]=(isMulti(t)?DIFFM:DIFF)[diff];return {t,m,n:genNum(rng,a,b)}}
+function techOf(m){m=+m;if(SINGLE.includes(m))return m;const l=String(m).length;return l===2?'x2':l===3?'x3':'xn'}
 const DIFF={facile:[2,3],medio:[3,4],difficile:[5,6]};
 const DIFFLBL={facile:'2–3 cifre',medio:'3–4 cifre',difficile:'5–6 cifre'};
 
@@ -582,7 +616,7 @@ function shuffle(rng,a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.f
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>e.classList.remove('on'),1800)}
 function shake(el){el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake')}
 function flashOk(el){el.classList.remove('flash-ok');void el.offsetWidth;el.classList.add('flash-ok')}
-const probHTML=(n,m)=>`<span class="z">0</span>${n} <span class="op">×</span> ${m}`;
+const probHTML=(n,m)=>`<span class="z">${'0'.repeat(SINGLE.includes(+m)?1:String(m).length)}</span>${n} <span class="op">×</span> ${m}`;
 
 /* ================= PROFILO ================= */
 const LEVELS=['Apprendista','Calcolatore','Fulmine','Mago dei numeri','Leggenda Trachtenberg'];
@@ -594,8 +628,8 @@ function stars(m){const s=st(m);return (s.guided>0?1:0)+(s.correct>=10?1:0)+(s.c
 function starHTML(n){return '<span class="stars">'+'★'.repeat(n)+'<span class="off">'+'★'.repeat(3-n)+'</span></span>'}
 function addXP(n){const before=Math.floor(P.xp/100);P.xp+=n;save();renderXP();if(Math.floor(P.xp/100)>before)toast('Nuovo livello: '+LEVELS[Math.min(LEVELS.length-1,Math.floor(P.xp/100))])}
 function renderXP(){const l=Math.floor(P.xp/100);$('lvlname').textContent=LEVELS[Math.min(LEVELS.length-1,l)];$('xpfill').style.width=(P.xp%100)+'%';$('xptxt').textContent=P.xp+' XP'}
-function renderHomeTech(){$('homeTech').innerHTML=ORDER.map(m=>`<a class="tech" href="#impara" data-m="${m}" style="text-decoration:none;color:inherit"><span class="x">× ${m}</span><span class="d">${TECH[m].d}</span>${starHTML(stars(m))}</a>`).join('');
-  $('homeTech').querySelectorAll('a').forEach(a=>a.onclick=()=>{L.m=+a.dataset.m;L.n=null})}
+function renderHomeTech(){$('homeTech').innerHTML=ORDER.map(m=>`<a class="tech" href="#impara" data-m="${m}" style="text-decoration:none;color:inherit"><span class="x">${tLabel(m)}</span><span class="d">${TECH[m].d}</span>${starHTML(stars(m))}</a>`).join('');
+  $('homeTech').querySelectorAll('a').forEach(a=>a.onclick=()=>{L.m=pT(a.dataset.m);L.n=null})}
 
 /* ================= SUONI ================= */
 let actx=null;
@@ -652,16 +686,18 @@ window.addEventListener('hashchange',route);
 /* ================= IMPARA ================= */
 const L={m:11,n:null,sol:null,k:0,err:0,errTot:0,mode:'guided',timer:null,done:false};
 function learnOpen(){
-  $('learnChips').innerHTML=ORDER.map(m=>`<button class="chip ${m===L.m?'on':''}" data-m="${m}">× ${m}</button>`).join('');
-  $('learnChips').querySelectorAll('button').forEach(b=>b.onclick=()=>{L.m=+b.dataset.m;L.n=null;learnOpen()});
+  $('learnChips').innerHTML=ORDER.map(m=>`<button class="chip ${m===L.m?'on':''}" data-m="${m}">${tLabel(m)}</button>`).join('');
+  $('learnChips').querySelectorAll('button').forEach(b=>b.onclick=()=>{L.m=pT(b.dataset.m);L.n=null;learnOpen()});
   const t=TECH[L.m];
-  $('ruleCard').innerHTML=`<div class="row" style="justify-content:space-between"><h2>× ${L.m}</h2>${starHTML(stars(L.m))}</div><p class="muted">${t.d}. Lavora da destra a sinistra, una cifra alla volta.</p>`+t.rules.map(r=>`<div class="rule"><b>${r[0]}</b><span>${r[1]}</span></div>`).join('')+`<button class="btn sm ghost" id="ruleToSolo" style="align-self:flex-start">Allenati in gara con il × ${L.m}</button>`;
+  $('ruleCard').innerHTML=`<div class="row" style="justify-content:space-between"><h2>${tLabel(L.m)}</h2>${starHTML(stars(L.m))}</div><p class="muted">${t.d}. Lavora da destra a sinistra, una cifra alla volta.</p>`+t.rules.map(r=>`<div class="rule"><b>${r[0]}</b><span>${r[1]}</span></div>`).join('')+`<button class="btn sm ghost" id="ruleToSolo" style="align-self:flex-start">Allenati in gara: ${tLabel(L.m)}</button>`;
   $('ruleToSolo').onclick=()=>{SS.techs=[L.m];location.hash='solo'};
-  if(!L.n)L.n=genNum(Math.random,3,4);
+  $('customM').style.display=isMulti(L.m)?'':'none';
+  if(!L.n||!L.mult)return learnNew();
   learnStart(L.n);
 }
+function learnNew(){const p=genProblem(Math.random,L.m,isMulti(L.m)?'medio':'medio');L.mult=p.m;learnStart(isMulti(L.m)?p.n:genNum(Math.random,3,5))}
 function learnStart(n){
-  clearInterval(L.timer);L.n=n;L.sol=solve(n,L.m);L.k=0;L.err=0;L.errTot=0;L.done=false;
+  clearInterval(L.timer);L.n=n;if(!isMulti(L.m))L.mult=L.m;L.sol=solve(n,L.mult);L.k=0;L.err=0;L.errTot=0;L.done=false;
   $('log').innerHTML='';
   keypad($('learnKp'),learnKey,{noOk:true});
   keyTarget=learnKey;
@@ -673,10 +709,14 @@ function learnStart(n){
 function learnRender(){
   const s=L.sol.s,steps=L.sol.steps,cur=steps[L.k],len=s.length;
   let top=`<div class="cell blank"></div>`;
-  for(let i=0;i<len;i++){let c='cell'+(i===0?' zero':'');let cap='';
-    if(cur&&!cur.final&&!L.done){if(i===cur.i){c+=' num';cap='cifra'}else if(i===cur.i+1){c+=' nb';cap='vicino'}}
+  const zeros=L.sol.direct?L.sol.k:1,live=cur&&!cur.final&&!L.done;
+  for(let i=0;i<len;i++){let c='cell'+(i<zeros?' zero':'');let cap='';
+    if(live&&!cur.direct){if(i===cur.i){c+=' num';cap='cifra'}else if(i===cur.i+1){c+=' nb';cap='vicino'}}
+    if(live&&cur.direct){const j=cur.pairs.findIndex(p=>p.ai===i);if(j>=0)c+=' pc'+Math.min(j,4)}
     top+=`<div class="${c}">${cap?`<span class="cap">${cap}</span>`:''}${s[i]}</div>`}
-  $('rowTop').innerHTML=top;$('rowTop').style.setProperty('--n',len+1);$('rowBot').style.setProperty('--n',len+1);$('multLbl').textContent='× '+L.m;
+  $('rowTop').innerHTML=top;$('rowTop').style.setProperty('--n',len+1);$('rowBot').style.setProperty('--n',len+1);
+  if(L.sol.direct){const ms=String(L.mult);$('multLbl').innerHTML='× '+[...ms].map((d,bj)=>{const j=live?cur.pairs.findIndex(p=>p.bj===bj):-1;return `<span class="mdig${j>=0?' pc'+Math.min(j,4):''}">${d}</span>`}).join('')}
+  else $('multLbl').textContent='× '+L.mult;
   const written={};steps.slice(0,L.k).forEach(x=>written[x.i]=x.w);
   let bot='';const hasFinal=steps[steps.length-1].final;
   const fcell=hasFinal&&L.k>=steps.length?`<div class="cell done">${steps[steps.length-1].w}</div>`:(cur&&cur.final?`<div class="cell cur"></div>`:`<div class="cell blank"></div>`);
@@ -687,13 +727,14 @@ function learnRender(){
   const posName={first:'primo passo',middle:'passo centrale',last:'ultimo passo (sotto lo zero)'};
   if(L.done){
     $('infoBar').innerHTML=`<span class="pill">Risultato: <b>${fmt(L.sol.result)}</b></span><span class="pill">Errori: <b>${L.errTot}</b></span>`;
-    $('say').innerHTML=`<b style="color:var(--ok)">Fatto!</b> ${fmt(L.n)} × ${L.m} = <b class="mono">${fmt(L.sol.result)}</b>. <button class="btn sm y" id="againBtn" style="margin-left:8px">Un altro</button>`;
-    $('againBtn').onclick=()=>learnStart(genNum(Math.random,3,5));
+    $('say').innerHTML=`<b style="color:var(--ok)">Fatto!</b> ${fmt(L.n)} × ${fmt(L.mult)} = <b class="mono">${fmt(L.sol.result)}</b>. <button class="btn sm y" id="againBtn" style="margin-left:8px">Un altro</button>`;
+    $('againBtn').onclick=learnNew;
     return;
   }
   if(cur.final){$('infoBar').innerHTML=`<span class="pill">Passo ${L.k+1} di ${steps.length}</span><span class="pill y">Riporto rimasto: <b>${cur.w}</b> · scrivilo davanti</span>`;
     $('say').textContent=L.mode==='watch'?stepText(cur):'';return}
-  $('infoBar').innerHTML=`<span class="pill">Passo ${L.k+1} di ${steps.length} · ${(L.m>=3&&L.m<=4)||L.m===8||L.m===9?posName[cur.pos]:'stessa regola'}</span><span class="pill y">Cifra <b>${cur.num}</b></span><span class="pill c">Vicino <b>${cur.nb}</b></span><span class="pill">Riporto <b>${cur.cin}</b></span>`;
+  if(cur.direct)$('infoBar').innerHTML=`<span class="pill">Passo ${L.k+1} di ${steps.length} · ${cur.pairs.length===1?'una coppia':cur.pairs.length+' coppie'}</span>`+cur.pairs.map((p,j)=>`<span class="pill pp${Math.min(j,4)}"><b>${p.a}×${p.b}</b></span>`).join('')+`<span class="pill">Riporto <b>${cur.cin}</b></span>`;
+  else $('infoBar').innerHTML=`<span class="pill">Passo ${L.k+1} di ${steps.length} · ${(L.m>=3&&L.m<=4)||L.m===8||L.m===9?posName[cur.pos]:'stessa regola'}</span><span class="pill y">Cifra <b>${cur.num}</b></span><span class="pill c">Vicino <b>${cur.nb}</b></span><span class="pill">Riporto <b>${cur.cin}</b></span>`;
   if(L.mode==='watch')$('say').textContent=stepText(cur);
   else $('say').innerHTML=L.err>=2?`Suggerimento: <span class="mono">${cur.ex}${cur.cin?' + riporto '+cur.cin:''}</span> = ? Scrivi solo le unità.`:'';
 }
@@ -701,7 +742,7 @@ function learnKey(k){
   if(L.done||L.mode!=='guided'||k==='ok'||k==='del')return;
   const cur=L.sol.steps[L.k];
   if(+k===cur.w){sOk();learnAccept(false)}
-  else{sNo();L.err++;L.errTot++;shake($('rowBot'));learnRender();if(L.err<2)$('say').innerHTML=`<span style="color:var(--coral)">${k} non è giusto.</span> Riprova: guarda cifra, vicino e riporto.`}
+  else{sNo();L.err++;L.errTot++;shake($('rowBot'));learnRender();if(L.err<2)$('say').innerHTML=`<span style="color:var(--coral)">${k} non è giusto.</span> Riprova: ${cur.direct?'moltiplica ogni coppia colorata, somma e aggiungi il riporto':'guarda cifra, vicino e riporto'}.`}
 }
 function learnAccept(auto){
   const cur=L.sol.steps[L.k];
@@ -713,8 +754,10 @@ function learnAccept(auto){
 }
 $('mGuided').onclick=()=>{L.mode='guided';learnStart(L.n)};
 $('mWatch').onclick=()=>{L.mode='watch';learnStart(L.n)};
-$('newN').onclick=()=>learnStart(genNum(Math.random,3,5));
-$('useN').onclick=()=>{const v=parseInt($('customN').value,10);if(v>0&&v<1e8)learnStart(v);else toast('Scrivi un numero intero da 1 a 99.999.999')};
+$('newN').onclick=learnNew;
+$('useN').onclick=()=>{const v=parseInt($('customN').value,10);if(!(v>0&&v<1e8))return toast('Scrivi un numero intero da 1 a 99.999.999');
+  if(isMulti(L.m)){const mv=parseInt($('customM').value,10);if(mv>=10&&mv<1e6){L.mult=mv;L.m=techOf(mv);if(!isMulti(L.m)){L.mult=L.m}}else if($('customM').value)return toast('Il moltiplicatore deve avere da 2 a 6 cifre')}
+  learnStart(v)};
 $('hintBtn').onclick=()=>{L.err=Math.max(L.err,2);learnRender()};
 $('showBtn').onclick=()=>{if(!L.done){L.errTot++;learnAccept(true)}};
 
@@ -726,7 +769,7 @@ function chipGroup(el,opts,get,set,multi=false,txt=false){
     if(multi){let a=get().slice();if(v==='all')a=ORDER.slice();else if(a.includes(v)){if(a.length>1)a=a.filter(x=>x!==v)}else a.push(v);set(a)}else set(v);paint()});
   paint();
 }
-const techOpts=[...ORDER.map(m=>[m,'× '+m]),['all','Tutte']];
+const techOpts=[...ORDER.map(m=>[m,tLabel(m)]),['all','Tutte']];
 
 /* ================= SFIDA SOLO ================= */
 const SS={techs:[11,12],diff:'facile',dur:60};
@@ -747,7 +790,7 @@ $('soloStart').onclick=()=>{
   keypad($('soloKp'),soloKey);keyTarget=soloKey;
   soloNext();S.int=setInterval(soloTick,200);soloHud();
 };
-function soloNext(){const [a,b]=DIFF[SS.diff];S.m=pick(S.rng,SS.techs);S.n=genNum(S.rng,a,b);S.t0=performance.now();$('sProb').innerHTML=probHTML(S.n,S.m);S.ans.clear()}
+function soloNext(){const p=genProblem(S.rng,pick(S.rng,SS.techs),SS.diff);S.tech=p.t;S.m=p.m;S.n=p.n;S.t0=performance.now();$('sProb').innerHTML=probHTML(S.n,S.m);S.ans.clear()}
 function soloTick(){const now=performance.now();S.t-=(now-S.last)/1000;S.last=now;if(S.t<=0){S.t=0;soloEnd(false)}soloHud()}
 function mult(){return 1+Math.min(S.streak,5)*.2}
 function soloHud(){$('sTime').textContent=Math.ceil(S.t);$('sScore').textContent=S.score;$('sCombo').textContent='×'+mult().toFixed(1);$('sBar').style.width=(S.t/SS.dur*100)+'%';$('sBar').style.background=S.t<10?'var(--coral)':''}
@@ -758,7 +801,7 @@ function soloKey(k){
   if(!S.ans.v)return;
   const right=String(S.n*S.m);
   if(S.ans.val()===right){
-    S.streak++;const pts=Math.round(String(S.n).length*10*mult());S.score+=pts;S.ok++;st(S.m).correct++;
+    S.streak++;const pts=Math.round(String(S.n).length*String(S.m).length*10*mult());S.score+=pts;S.ok++;st(S.tech).correct++;
     $('sFb').className='fb ok';$('sFb').textContent=`Giusto! +${pts}`;sOk();flashOk($('sAns'));soloNext();
   }else{
     S.streak=0;S.no++;S.errs.push({n:S.n,m:S.m,given:S.ans.v});
@@ -778,9 +821,9 @@ function soloEnd(silent){
   e.innerHTML=`<div><div class="eyebrow">Tempo scaduto</div><h2>${S.score} punti${rec&&S.score>0?' · nuovo record!':''}</h2></div>
   <div class="grid g4"><div class="stat"><span class="muted">Giuste</span><b>${S.ok}</b></div><div class="stat"><span class="muted">Sbagliate o passate</span><b>${S.errs.length}</b></div><div class="stat"><span class="muted">Precisione</span><b>${acc}%</b></div><div class="stat"><span class="muted">XP guadagnati</span><b>+${xp}</b></div></div>
   ${S.code?`<p class="muted">Codice sfida: <b class="mono">${esc(S.code)}</b>. Confronta il punteggio con chi ha usato lo stesso codice.</p>`:''}
-  ${S.errs.length?`<div class="stack"><h3>Da rivedere</h3><div class="errs">${S.errs.slice(0,8).map((x,i)=>`<div class="er"><span class="mono">${fmt(x.n)} × ${x.m} = ${fmt(x.n*x.m)} <span class="muted">(tu: ${esc(x.given)})</span></span><button class="btn sm ghost" data-i="${i}">Rivedi passo passo</button></div>`).join('')}</div></div>`:''}
+  ${S.errs.length?`<div class="stack"><h3>Da rivedere</h3><div class="errs">${S.errs.slice(0,8).map((x,i)=>`<div class="er"><span class="mono">${fmt(x.n)} × ${fmt(x.m)} = ${fmt(x.n*x.m)} <span class="muted">(tu: ${esc(x.given)})</span></span><button class="btn sm ghost" data-i="${i}">Rivedi passo passo</button></div>`).join('')}</div></div>`:''}
   <div class="row"><button class="btn y" id="soloAgain">Rigioca</button><button class="btn ghost" id="soloBack">Cambia impostazioni</button></div>`;
-  e.querySelectorAll('.er button').forEach(b=>b.onclick=()=>{const x=S.errs[+b.dataset.i];L.m=x.m;L.n=x.n;L.mode='guided';location.hash='impara'});
+  e.querySelectorAll('.er button').forEach(b=>b.onclick=()=>{const x=S.errs[+b.dataset.i];L.m=techOf(x.m);L.mult=x.m;L.n=x.n;L.mode='guided';location.hash='impara'});
   $('soloAgain').onclick=()=>$('soloStart').click();$('soloBack').onclick=soloSetupRender;
 }
 
@@ -800,7 +843,7 @@ $('dStart').onclick=()=>{
   const ov=$('duelOv');ov.classList.add('on');document.body.style.overflow='hidden';
   if(DS.mode==='h2h')h2hBuild();else turnBuild();
 };
-function dGen(){const [a,b]=DIFF[DS.diff];D.m=pick(D.rng,DS.techs);D.n=genNum(D.rng,a,b)}
+function dGen(){const p=genProblem(D.rng,pick(D.rng,DS.techs),DS.diff);D.m=p.m;D.n=p.n}
 function dClose(){const ov=$('duelOv');ov.classList.remove('on');ov.innerHTML='';document.body.style.overflow='';clearInterval(D&&D.int);keyTarget=null;D=null}
 function winnerHTML(){return `<div class="winner" id="dWin"></div>`}
 function showWinner(w){const el=$('dWin');el.classList.add('on');addXP(10);
@@ -1017,7 +1060,7 @@ function roomSetupRender(){
 }
 $('rCreate').onclick=async()=>{
   const btn=$('rCreate');btn.disabled=true;$('rMsg').textContent='Creo la stanza…';
-  try{const [a,b]=DIFF[RS.diff],qs=[];for(let i=0;i<RS.count;i++)qs.push({n:genNum(Math.random,a,b),m:pick(Math.random,RS.techs)});
+  try{const qs=[];for(let i=0;i<RS.count;i++){const p=genProblem(Math.random,pick(Math.random,RS.techs),RS.diff);qs.push({n:p.n,m:p.m})}
     const res=await rpc('tl_create_room',{p_mode:RS.mode,p_settings:{techs:RS.techs,diff:RS.diff,minutes:RS.mode==='self'?RS.min:0},p_questions:qs,p_q_seconds:RS.sec});
     $('rMsg').textContent='';await hostOpen(res.room,res.host_token);
   }catch(e){$('rMsg').textContent=errMsg(e)}finally{btn.disabled=false}
@@ -1153,7 +1196,7 @@ function gRender(force){
   const r=G.room,p=G.player,el=$('gioca');keyTarget=null;
   const head=`<div class="gtop"><span class="eyebrow">Stanza ${pinFmt(r.pin)} · ${esc(G.nick)}</span><span class="pill">Punti <b id="gScore">${p.score}</b></span></div>`;
   let html='';
-  if(r.status==='lobby')html=`<div class="card stack">${head}<h2>Ci sei, ${esc(G.nick)}!</h2><p>Aspetta che il prof avvii la partita. Intanto ripassa le regole in gara: ${(r.settings.techs||[]).map(m=>'× '+m).join(', ')}.</p><p class="muted"><span id="gN">${G.np}</span> in stanza</p><button class="btn sm ghost" id="gLeave" style="align-self:flex-start">Esci dalla stanza</button></div>`;
+  if(r.status==='lobby')html=`<div class="card stack">${head}<h2>Ci sei, ${esc(G.nick)}!</h2><p>Aspetta che il prof avvii la partita. Intanto ripassa le regole in gara: ${(r.settings.techs||[]).map(tLabel).join(', ')}.</p><p class="muted"><span id="gN">${G.np}</span> in stanza</p><button class="btn sm ghost" id="gLeave" style="align-self:flex-start">Esci dalla stanza</button></div>`;
   else if(r.status==='question'&&p.last_q!==r.current_q)html=`<div class="card">${head}<div class="hud" style="margin-top:8px"><span class="eyebrow">Domanda ${r.current_q+1} di ${r.total_q}</span><span class="big mono" id="gTimer"></span></div><div class="tbar"><i id="gBar"></i></div><div class="prob">${probHTML(r.cur_n,r.cur_m)}</div><div class="ans" id="gAns"></div><div class="fb" id="gFb"></div><div id="gKp"></div></div>`;
   else if(r.status==='question'||r.status==='reveal'){
     const mine=p.last_q===r.current_q,res=G.res||{correct:p.last_correct,points:p.last_points};
