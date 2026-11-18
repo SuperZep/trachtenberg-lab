@@ -125,7 +125,11 @@ input[type=text],input[type=number]{background:#132824;border:1px solid var(--li
 .cell.pc2,.mdig.pc2{border-color:var(--coral);color:var(--coral);background:rgba(255,107,91,.12)}
 .cell.pc3,.mdig.pc3{border-color:var(--ok);color:var(--ok);background:rgba(134,224,143,.12)}
 .cell.pc4,.mdig.pc4{border-color:var(--blue);color:var(--blue);background:rgba(122,167,255,.12)}
+.cell.u0{border-color:var(--yellow);color:var(--yellow);background:rgba(255,210,63,.12)}.cell.u1{border-color:var(--cyan);color:var(--cyan);background:rgba(98,219,227,.12)}.cell.u2{border-color:var(--coral);color:var(--coral);background:rgba(255,107,91,.12)}.cell.u3{border-color:var(--ok);color:var(--ok);background:rgba(134,224,143,.12)}.cell.u4{border-color:var(--blue);color:var(--blue)}
+.cell.t0{outline:2px dashed var(--yellow);outline-offset:1px}.cell.t1{outline:2px dashed var(--cyan);outline-offset:1px}.cell.t2{outline:2px dashed var(--coral);outline-offset:1px}.cell.t3{outline:2px dashed var(--ok);outline-offset:1px}.cell.t4{outline:2px dashed var(--blue);outline-offset:1px}
+.cell.u0 .cap{color:var(--yellow)}.cell.t0 .cap{color:var(--yellow)}
 .mdig{display:inline-block;min-width:1.2em;padding:0 3px;border-radius:6px;border:2px solid transparent;margin:0 1px}
+.pill b{font-weight:800}.pill .mono b{color:var(--chalk);text-decoration:underline;text-underline-offset:3px}
 .pill.pp0{color:var(--yellow)}.pill.pp1{color:var(--cyan)}.pill.pp2{color:var(--coral)}.pill.pp3{color:var(--ok)}.pill.pp4{color:var(--blue)}
 .cell.cur{border:2px dashed var(--chalk);animation:blink 1.2s infinite}
 .cell.done{color:var(--ok)}
@@ -565,6 +569,24 @@ function solveDirect(n,m){
   return {s,steps,direct:true,k,result:steps.map(x=>x.w).reverse().join('').replace(/^0+(?=\d)/,'')};
 }
 function solve(n,m){return SINGLE.includes(+m)?solveSingle(n,+m):solveDirect(n,m)}
+function solveTF(n,m){
+  const ms=String(m),k=ms.length,s='0'.repeat(k)+String(n),L=s.length,steps=[];let carry=0;
+  for(let r=0;r<L;r++){
+    const i=L-1-r,groups=[];
+    for(let j=0;j<k&&j<=r;j++){
+      const ui=i+j,ti=ui+1<L?ui+1:-1,b=+ms[k-1-j],ua=+s[ui],up=ua*b,u=up%10;
+      const ta=ti>=0?+s[ti]:null,tp=ti>=0?ta*b:null,t=ti>=0?Math.floor(tp/10):0;
+      groups.push({j,bj:k-1-j,b,ui,ti,ua,up,u,ta,tp,t,val:u+t});
+    }
+    const raw=groups.reduce((x,g)=>x+g.val,0),tot=raw+carry,w=tot%10,c=Math.floor(tot/10);
+    const ex=groups.map(g=>`${g.ua}${g.ti>=0?g.ta:'_'}×${g.b} → ${g.u}+${g.t}`).join(' · ');
+    steps.push({tf:true,i,groups,raw,cin:carry,tot,w,c,ex});carry=c;
+  }
+  while(steps.length>1&&steps[steps.length-1].tot===0)steps.pop();
+  return {s,steps,tf:true,k,result:steps.map(x=>x.w).reverse().join('').replace(/^0+(?=\d)/,'')};
+}
+const isTF=t=>typeof t==='string'&&t[0]==='u';
+function solveBy(n,m,t){return isTF(t)?solveTF(n,m):solve(n,m)}
 function stepText(st){
   if(st.final)return `Riporto rimasto → scrivo ${st.w} davanti`;
   let t=`${st.ex} = ${st.raw}`;
@@ -575,7 +597,7 @@ function stepText(st){
 }
 
 /* ================= DATI DELLE REGOLE ================= */
-const ORDER=[11,12,6,7,5,9,8,4,3,2,'x2','x3','xn'];
+const ORDER=[11,12,6,7,5,9,8,4,3,2,'x2','x3','xn','u1','u2','u3','un'];
 const TECH={
  11:{d:'Somma il vicino',rules:[['Ogni passo','cifra + vicino']]},
  12:{d:'Raddoppia e somma il vicino',rules:[['Ogni passo','doppio della cifra + vicino']]},
@@ -589,16 +611,20 @@ const TECH={
  2:{d:'Raddoppia ogni cifra',rules:[['Ogni passo','doppio della cifra (il vicino non serve)']]},
  x2:{d:'Coppia esterna + coppia interna',rules:[['Prima','scrivi 2 zeri davanti al numero'],['Primo passo, a destra','unità × unità del moltiplicatore'],['Ogni passo dopo','coppia esterna (cifra sopra × ultima cifra del moltiplicatore) + coppia interna (le due cifre appena più dentro)'],['Riporto','può essere anche più di 9: portalo tutto al passo dopo']]},
  x3:{d:'Tre coppie: esterna, centrale, interna',rules:[['Prima','scrivi 3 zeri davanti al numero'],['Ogni passo','coppia esterna (cifra sopra × ultima cifra del moltiplicatore) + coppia centrale + coppia interna, spostandoti verso l\'interno'],['Coppie con lo zero','zero per qualsiasi cifra fa zero: salta il conto'],['Riporto','può essere anche più di 9: portalo tutto al passo dopo']]},
+ u1:{d:'Unità della cifra + decine della vicina',rules:[['Prima','scrivi uno zero davanti al numero e pensa ogni prodotto con due cifre: 2×3 = 06'],['Coppia U-T','U è la cifra sopra il posto dove scrivi, T è la sua vicina di destra'],['Ogni passo','unità di (U × moltiplicatore) + decine di (T × moltiplicatore)'],['Due dita','medio sulla U, indice sulla T: a ogni passo si spostano di una cifra a sinistra'],['Riporto','al massimo 1: è il vantaggio del metodo']]},
+ u2:{d:'Due coppie U-T, una per cifra del moltiplicatore',rules:[['Prima','scrivi 2 zeri davanti al numero'],['Coppia esterna','la U è la cifra sopra il posto dove scrivi, la T è la sua vicina; lavora con l\'ultima cifra del moltiplicatore'],['Coppia interna','spostati di una cifra verso destra e lavora con la prima cifra del moltiplicatore'],['Ogni coppia','unità di (U × cifra) + decine di (T × cifra), poi somma tutto con il riporto'],['Riporto','resta piccolo: 1, 2 o 3']]},
+ u3:{d:'Tre coppie U-T: esterna, centrale, interna',rules:[['Prima','scrivi 3 zeri davanti al numero'],['Ogni passo','tre coppie U-T, una per cifra del moltiplicatore: dalla cifra sopra il posto dove scrivi verso destra'],['Ogni coppia','unità di (U × cifra) + decine di (T × cifra)'],['Riporto','resta piccolo anche con cifre grandi come 9 e 8']]},
+ un:{d:'Una coppia U-T per ogni cifra del moltiplicatore',rules:[['Prima','scrivi tanti zeri davanti quante sono le cifre del moltiplicatore'],['Ogni passo','una coppia U-T per ogni cifra del moltiplicatore, spostandoti verso destra di una cifra alla volta'],['Ogni coppia','unità di (U × cifra) + decine di (T × cifra), poi somma tutto con il riporto'],['Consiglio','segna le coppie con le dita: i colori ti aiutano a non perdere il posto']]},
  xn:{d:'Una coppia per ogni cifra del moltiplicatore',rules:[['Prima','scrivi tanti zeri davanti quante sono le cifre del moltiplicatore'],['Ogni passo','somma tutte le coppie: la cifra sopra con l\'ultima del moltiplicatore, poi verso l\'interno, una coppia per cifra'],['Consiglio','usa le dita per non perdere il segno: una coppia alla volta'],['Riporto','può essere anche più di 9: portalo tutto al passo dopo']]}
 };
-const MULTI={x2:{k:[2,2],label:'× 2 cifre'},x3:{k:[3,3],label:'× 3 cifre'},xn:{k:[4,5],label:'× N cifre'}};
+const MULTI={x2:{k:[2,2],label:'× 2 cifre'},x3:{k:[3,3],label:'× 3 cifre'},xn:{k:[4,5],label:'× N cifre'},u1:{k:[1,1],label:'Due dita × 1 cifra',tf:1,lo:3},u2:{k:[2,2],label:'Due dita × 2 cifre',tf:1,lo:2},u3:{k:[3,3],label:'Due dita × 3 cifre',tf:1,lo:2},un:{k:[4,5],label:'Due dita × N cifre',tf:1,lo:2}};
 const isMulti=t=>typeof t==='string'&&!!MULTI[t];
 const tLabel=t=>isMulti(t)?MULTI[t].label:'× '+t;
 const pT=v=>isNaN(+v)?v:+v;
 const DIFFM={facile:[2,2],medio:[2,3],difficile:[3,4]};
-function genMult(rng,t,diff){if(!isMulti(t))return t;const [a,b]=MULTI[t].k,d=a+Math.floor(rng()*(b-a+1)),hi=diff==='facile'?4:9;let m;
-  do{m='';for(let i=0;i<d;i++)m+=1+Math.floor(rng()*hi);m=+m}while(m===11||m===12);return m}
-function genProblem(rng,t,diff){const m=genMult(rng,t,diff),[a,b]=(isMulti(t)?DIFFM:DIFF)[diff];return {t,m,n:genNum(rng,a,b)}}
+function genMult(rng,t,diff){if(!isMulti(t))return t;const M=MULTI[t],[a,b]=M.k,d=a+Math.floor(rng()*(b-a+1)),lo=M.lo||1,hi=M.tf?9:(diff==='facile'?4:9);let m;
+  do{m='';for(let i=0;i<d;i++)m+=lo+Math.floor(rng()*(hi-lo+1));m=+m}while(!M.tf&&(m===11||m===12));return m}
+function genProblem(rng,t,diff){const m=genMult(rng,t,diff),[a,b]=(isMulti(t)&&t!=='u1'?DIFFM:DIFF)[diff];return {t,m,n:genNum(rng,a,b)}}
 function techOf(m){m=+m;if(SINGLE.includes(m))return m;const l=String(m).length;return l===2?'x2':l===3?'x3':'xn'}
 const DIFF={facile:[2,3],medio:[3,4],difficile:[5,6]};
 const DIFFLBL={facile:'2–3 cifre',medio:'3–4 cifre',difficile:'5–6 cifre'};
@@ -689,15 +715,15 @@ function learnOpen(){
   $('learnChips').innerHTML=ORDER.map(m=>`<button class="chip ${m===L.m?'on':''}" data-m="${m}">${tLabel(m)}</button>`).join('');
   $('learnChips').querySelectorAll('button').forEach(b=>b.onclick=()=>{L.m=pT(b.dataset.m);L.n=null;learnOpen()});
   const t=TECH[L.m];
-  $('ruleCard').innerHTML=`<div class="row" style="justify-content:space-between"><h2>${tLabel(L.m)}</h2>${starHTML(stars(L.m))}</div><p class="muted">${t.d}. Lavora da destra a sinistra, una cifra alla volta.</p>`+t.rules.map(r=>`<div class="rule"><b>${r[0]}</b><span>${r[1]}</span></div>`).join('')+`<button class="btn sm ghost" id="ruleToSolo" style="align-self:flex-start">Allenati in gara: ${tLabel(L.m)}</button>`;
+  $('ruleCard').innerHTML=`<div class="row" style="justify-content:space-between"><h2>${tLabel(L.m)}</h2>${starHTML(stars(L.m))}</div><p class="muted">${t.d}. Lavora da destra a sinistra, una cifra alla volta.</p>`+t.rules.map(r=>`<div class="rule"><b>${r[0]}</b><span>${r[1]}</span></div>`).join('')+(isTF(L.m)?`<p class="muted" style="font-size:.9rem">Nell'esercizio: bordo pieno = cifra U, bordo tratteggiato = cifra T. Ogni colore è una cifra del moltiplicatore.</p>`:'')+`<button class="btn sm ghost" id="ruleToSolo" style="align-self:flex-start">Allenati in gara: ${tLabel(L.m)}</button>`;
   $('ruleToSolo').onclick=()=>{SS.techs=[L.m];location.hash='solo'};
   $('customM').style.display=isMulti(L.m)?'':'none';
   if(!L.n||!L.mult)return learnNew();
   learnStart(L.n);
 }
-function learnNew(){const p=genProblem(Math.random,L.m,isMulti(L.m)?'medio':'medio');L.mult=p.m;learnStart(isMulti(L.m)?p.n:genNum(Math.random,3,5))}
+function learnNew(){const p=genProblem(Math.random,L.m,'medio');L.mult=p.m;learnStart(isMulti(L.m)&&L.m!=='u1'?p.n:genNum(Math.random,3,5))}
 function learnStart(n){
-  clearInterval(L.timer);L.n=n;if(!isMulti(L.m))L.mult=L.m;L.sol=solve(n,L.mult);L.k=0;L.err=0;L.errTot=0;L.done=false;
+  clearInterval(L.timer);L.n=n;if(!isMulti(L.m))L.mult=L.m;L.sol=solveBy(n,L.mult,L.m);L.k=0;L.err=0;L.errTot=0;L.done=false;
   $('log').innerHTML='';
   keypad($('learnKp'),learnKey,{noOk:true});
   keyTarget=learnKey;
@@ -709,13 +735,14 @@ function learnStart(n){
 function learnRender(){
   const s=L.sol.s,steps=L.sol.steps,cur=steps[L.k],len=s.length;
   let top=`<div class="cell blank"></div>`;
-  const zeros=L.sol.direct?L.sol.k:1,live=cur&&!cur.final&&!L.done;
+  const zeros=(L.sol.direct||L.sol.tf)?L.sol.k:1,live=cur&&!cur.final&&!L.done;
   for(let i=0;i<len;i++){let c='cell'+(i<zeros?' zero':'');let cap='';
-    if(live&&!cur.direct){if(i===cur.i){c+=' num';cap='cifra'}else if(i===cur.i+1){c+=' nb';cap='vicino'}}
+    if(live&&!cur.direct&&!cur.tf){if(i===cur.i){c+=' num';cap='cifra'}else if(i===cur.i+1){c+=' nb';cap='vicino'}}
     if(live&&cur.direct){const j=cur.pairs.findIndex(p=>p.ai===i);if(j>=0)c+=' pc'+Math.min(j,4)}
+    if(live&&cur.tf){const gu=cur.groups.find(g=>g.ui===i),gt=cur.groups.find(g=>g.ti===i);if(gu)c+=' u'+Math.min(gu.j,4);if(gt)c+=' t'+Math.min(gt.j,4);if(cur.groups.length===1){if(gu)cap='U';else if(gt)cap='T'}}
     top+=`<div class="${c}">${cap?`<span class="cap">${cap}</span>`:''}${s[i]}</div>`}
   $('rowTop').innerHTML=top;$('rowTop').style.setProperty('--n',len+1);$('rowBot').style.setProperty('--n',len+1);
-  if(L.sol.direct){const ms=String(L.mult);$('multLbl').innerHTML='× '+[...ms].map((d,bj)=>{const j=live?cur.pairs.findIndex(p=>p.bj===bj):-1;return `<span class="mdig${j>=0?' pc'+Math.min(j,4):''}">${d}</span>`}).join('')}
+  if(L.sol.direct||L.sol.tf){const ms=String(L.mult);$('multLbl').innerHTML='× '+[...ms].map((d,bj)=>{const j=live?(cur.tf?cur.groups:cur.pairs).findIndex(p=>p.bj===bj):-1;return `<span class="mdig${j>=0?' pc'+Math.min(j,4):''}">${d}</span>`}).join('')}
   else $('multLbl').textContent='× '+L.mult;
   const written={};steps.slice(0,L.k).forEach(x=>written[x.i]=x.w);
   let bot='';const hasFinal=steps[steps.length-1].final;
@@ -733,7 +760,9 @@ function learnRender(){
   }
   if(cur.final){$('infoBar').innerHTML=`<span class="pill">Passo ${L.k+1} di ${steps.length}</span><span class="pill y">Riporto rimasto: <b>${cur.w}</b> · scrivilo davanti</span>`;
     $('say').textContent=L.mode==='watch'?stepText(cur):'';return}
-  if(cur.direct)$('infoBar').innerHTML=`<span class="pill">Passo ${L.k+1} di ${steps.length} · ${cur.pairs.length===1?'una coppia':cur.pairs.length+' coppie'}</span>`+cur.pairs.map((p,j)=>`<span class="pill pp${Math.min(j,4)}"><b>${p.a}×${p.b}</b></span>`).join('')+`<span class="pill">Riporto <b>${cur.cin}</b></span>`;
+  const p2=x=>String(x).padStart(2,'0'),tens=x=>`<b>${p2(x)[0]}</b>${p2(x)[1]}`,unit=x=>`${p2(x)[0]}<b>${p2(x)[1]}</b>`;
+  if(cur.tf)$('infoBar').innerHTML=`<span class="pill">Passo ${L.k+1} di ${steps.length} · ${cur.groups.length===1?'una coppia U-T':cur.groups.length+' coppie U-T'}</span>`+cur.groups.map(g=>`<span class="pill pp${Math.min(g.j,4)}">${g.ua}${g.ti>=0?g.ta:'_'} × ${g.b}: <span class="mono">${unit(g.up)}${g.ti>=0?' + '+tens(g.tp):''}</span> → <b>${g.val}</b></span>`).join('')+`<span class="pill">Riporto <b>${cur.cin}</b></span>`;
+  else if(cur.direct)$('infoBar').innerHTML=`<span class="pill">Passo ${L.k+1} di ${steps.length} · ${cur.pairs.length===1?'una coppia':cur.pairs.length+' coppie'}</span>`+cur.pairs.map((p,j)=>`<span class="pill pp${Math.min(j,4)}"><b>${p.a}×${p.b}</b></span>`).join('')+`<span class="pill">Riporto <b>${cur.cin}</b></span>`;
   else $('infoBar').innerHTML=`<span class="pill">Passo ${L.k+1} di ${steps.length} · ${(L.m>=3&&L.m<=4)||L.m===8||L.m===9?posName[cur.pos]:'stessa regola'}</span><span class="pill y">Cifra <b>${cur.num}</b></span><span class="pill c">Vicino <b>${cur.nb}</b></span><span class="pill">Riporto <b>${cur.cin}</b></span>`;
   if(L.mode==='watch')$('say').textContent=stepText(cur);
   else $('say').innerHTML=L.err>=2?`Suggerimento: <span class="mono">${cur.ex}${cur.cin?' + riporto '+cur.cin:''}</span> = ? Scrivi solo le unità.`:'';
@@ -742,7 +771,7 @@ function learnKey(k){
   if(L.done||L.mode!=='guided'||k==='ok'||k==='del')return;
   const cur=L.sol.steps[L.k];
   if(+k===cur.w){sOk();learnAccept(false)}
-  else{sNo();L.err++;L.errTot++;shake($('rowBot'));learnRender();if(L.err<2)$('say').innerHTML=`<span style="color:var(--coral)">${k} non è giusto.</span> Riprova: ${cur.direct?'moltiplica ogni coppia colorata, somma e aggiungi il riporto':'guarda cifra, vicino e riporto'}.`}
+  else{sNo();L.err++;L.errTot++;shake($('rowBot'));learnRender();if(L.err<2)$('say').innerHTML=`<span style="color:var(--coral)">${k} non è giusto.</span> Riprova: ${cur.tf?'per ogni coppia prendi le unità del prodotto della U e le decine del prodotto della T, poi somma con il riporto':cur.direct?'moltiplica ogni coppia colorata, somma e aggiungi il riporto':'guarda cifra, vicino e riporto'}.`}
 }
 function learnAccept(auto){
   const cur=L.sol.steps[L.k];
@@ -756,7 +785,8 @@ $('mGuided').onclick=()=>{L.mode='guided';learnStart(L.n)};
 $('mWatch').onclick=()=>{L.mode='watch';learnStart(L.n)};
 $('newN').onclick=learnNew;
 $('useN').onclick=()=>{const v=parseInt($('customN').value,10);if(!(v>0&&v<1e8))return toast('Scrivi un numero intero da 1 a 99.999.999');
-  if(isMulti(L.m)){const mv=parseInt($('customM').value,10);if(mv>=10&&mv<1e6){L.mult=mv;L.m=techOf(mv);if(!isMulti(L.m)){L.mult=L.m}}else if($('customM').value)return toast('Il moltiplicatore deve avere da 2 a 6 cifre')}
+  if(isTF(L.m)){const mv=parseInt($('customM').value,10);if(mv>=2&&mv<1e6){const l=String(mv).length;L.mult=mv;L.m=l===1?'u1':l===2?'u2':l===3?'u3':'un'}else if($('customM').value)return toast('Il moltiplicatore va da 2 a 999.999')}
+  else if(isMulti(L.m)){const mv=parseInt($('customM').value,10);if(mv>=10&&mv<1e6){L.mult=mv;L.m=techOf(mv);if(!isMulti(L.m)){L.mult=L.m}}else if($('customM').value)return toast('Il moltiplicatore deve avere da 2 a 6 cifre')}
   learnStart(v)};
 $('hintBtn').onclick=()=>{L.err=Math.max(L.err,2);learnRender()};
 $('showBtn').onclick=()=>{if(!L.done){L.errTot++;learnAccept(true)}};
@@ -804,12 +834,12 @@ function soloKey(k){
     S.streak++;const pts=Math.round(String(S.n).length*String(S.m).length*10*mult());S.score+=pts;S.ok++;st(S.tech).correct++;
     $('sFb').className='fb ok';$('sFb').textContent=`Giusto! +${pts}`;sOk();flashOk($('sAns'));soloNext();
   }else{
-    S.streak=0;S.no++;S.errs.push({n:S.n,m:S.m,given:S.ans.v});
+    S.streak=0;S.no++;S.errs.push({n:S.n,m:S.m,t:S.tech,given:S.ans.v});
     $('sFb').className='fb no';$('sFb').textContent=`No: ${fmt(S.n)} × ${S.m} = ${fmt(right)}`;sNo();shake($('sAns'));soloNext();
   }
   soloHud();
 }
-$('sSkip').onclick=()=>{if(!S.running)return;S.streak=0;S.errs.push({n:S.n,m:S.m,given:'(passato)'});$('sFb').className='fb';$('sFb').textContent='Passato';soloNext();soloHud()};
+$('sSkip').onclick=()=>{if(!S.running)return;S.streak=0;S.errs.push({n:S.n,m:S.m,t:S.tech,given:'(passato)'});$('sFb').className='fb';$('sFb').textContent='Passato';soloNext();soloHud()};
 $('sStop').onclick=()=>soloEnd(false);
 function soloEnd(silent){
   clearInterval(S.int);if(!S.running)return;S.running=false;keyTarget=null;
@@ -823,7 +853,7 @@ function soloEnd(silent){
   ${S.code?`<p class="muted">Codice sfida: <b class="mono">${esc(S.code)}</b>. Confronta il punteggio con chi ha usato lo stesso codice.</p>`:''}
   ${S.errs.length?`<div class="stack"><h3>Da rivedere</h3><div class="errs">${S.errs.slice(0,8).map((x,i)=>`<div class="er"><span class="mono">${fmt(x.n)} × ${fmt(x.m)} = ${fmt(x.n*x.m)} <span class="muted">(tu: ${esc(x.given)})</span></span><button class="btn sm ghost" data-i="${i}">Rivedi passo passo</button></div>`).join('')}</div></div>`:''}
   <div class="row"><button class="btn y" id="soloAgain">Rigioca</button><button class="btn ghost" id="soloBack">Cambia impostazioni</button></div>`;
-  e.querySelectorAll('.er button').forEach(b=>b.onclick=()=>{const x=S.errs[+b.dataset.i];L.m=techOf(x.m);L.mult=x.m;L.n=x.n;L.mode='guided';location.hash='impara'});
+  e.querySelectorAll('.er button').forEach(b=>b.onclick=()=>{const x=S.errs[+b.dataset.i];L.m=x.t!==undefined?x.t:techOf(x.m);L.mult=x.m;L.n=x.n;L.mode='guided';location.hash='impara'});
   $('soloAgain').onclick=()=>$('soloStart').click();$('soloBack').onclick=soloSetupRender;
 }
 
@@ -1060,7 +1090,7 @@ function roomSetupRender(){
 }
 $('rCreate').onclick=async()=>{
   const btn=$('rCreate');btn.disabled=true;$('rMsg').textContent='Creo la stanza…';
-  try{const qs=[];for(let i=0;i<RS.count;i++){const p=genProblem(Math.random,pick(Math.random,RS.techs),RS.diff);qs.push({n:p.n,m:p.m})}
+  try{const qs=[];for(let i=0;i<RS.count;i++){const p=genProblem(Math.random,pick(Math.random,RS.techs),RS.diff);qs.push({n:p.n,m:p.m,t:p.t})}
     const res=await rpc('tl_create_room',{p_mode:RS.mode,p_settings:{techs:RS.techs,diff:RS.diff,minutes:RS.mode==='self'?RS.min:0},p_questions:qs,p_q_seconds:RS.sec});
     $('rMsg').textContent='';await hostOpen(res.room,res.host_token);
   }catch(e){$('rMsg').textContent=errMsg(e)}finally{btn.disabled=false}
@@ -1101,10 +1131,10 @@ function hostRender(){
     <div class="prob hprob">${probHTML(r.cur_n,r.cur_m)}</div>
     <div class="row" style="justify-content:center"><button class="btn ghost" id="hReveal">Mostra subito la soluzione</button></div>`;
   }else if(r.status==='reveal'){
-    const so=solve(r.cur_n,r.cur_m),st=H.stats||{right:0,wrong:0},tot=Math.max(1,H.players.length),none=Math.max(0,H.players.length-st.right-st.wrong),last=r.current_q+1>=r.total_q;
+    const hq=(H.questions||[])[r.current_q]||{},so=solveBy(r.cur_n,r.cur_m,hq.t),st=H.stats||{right:0,wrong:0},tot=Math.max(1,H.players.length),none=Math.max(0,H.players.length-st.right-st.wrong),last=r.current_q+1>=r.total_q;
     body=`<span class="eyebrow">Domanda ${r.current_q+1} di ${r.total_q} · soluzione</span>
     <div class="prob hprob" style="margin:4px 0">${fmt(r.cur_n)} <span class="op">×</span> ${r.cur_m} = <span style="color:var(--ok)">${fmt(so.result)}</span></div>
-    <div class="grid g2"><div class="card stack"><h3>Passaggi di Trachtenberg, da destra</h3><div class="log" style="max-height:none;color:var(--chalk)">${so.steps.map((s,i)=>`<div>${i+1}. ${esc(stepText(s))}</div>`).join('')}</div></div>
+    <div class="grid g2"><div class="card stack"><h3>Passaggi di Trachtenberg, da destra${isTF(hq.t)?' · metodo a due dita':''}</h3><div class="log" style="max-height:none;color:var(--chalk)">${so.steps.map((s,i)=>`<div>${i+1}. ${esc(stepText(s))}</div>`).join('')}</div></div>
     <div class="card stack"><h3>Com'è andata</h3><div class="bars"><div class="b"><span>Giuste</span><i style="width:${st.right/tot*100}%;background:var(--ok)"></i><b class="mono">${st.right}</b></div><div class="b"><span>Sbagliate</span><i style="width:${st.wrong/tot*100}%;background:var(--coral)"></i><b class="mono">${st.wrong}</b></div><div class="b"><span>Senza risposta</span><i style="width:${none/tot*100}%;background:var(--muted)"></i><b class="mono">${none}</b></div></div>
     <h3>Classifica</h3><div id="hTop"></div></div></div>
     <div class="row" style="justify-content:center"><button class="btn y" id="hNext">${last?'Classifica finale':'Prossima domanda'}</button></div>`;
