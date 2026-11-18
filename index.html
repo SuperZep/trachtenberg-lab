@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trachtenberg Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Lavagna di scuola: fondo verde-ardesia, gesso chiaro, gessetto giallo = cifra, azzurro = vicino.
+     Layout: barra di navigazione + una vista alla volta; giochi a pieno schermo. Tema unico scelto apposta. */
+  --bg:#17302b; --panel:#1f3f38; --panel2:#264b43; --line:rgba(243,241,231,.16);
+  --chalk:#f3f1e7; --muted:#a8c1b7;
+  --yellow:#ffd23f; --cyan:#62dbe3; --coral:#ff6b5b; --blue:#7aa7ff; --ok:#86e08f;
+  --esc:#1b1413; --esc2:#2a1d1b;
+  --f-display:"Bricolage Grotesque", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r:14px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--chalk);font-family:var(--f-body);font-size:17px;line-height:1.5;
+  background-image:radial-gradient(ellipse at 20% 0%,rgba(255,255,255,.05),transparent 60%),radial-gradient(ellipse at 90% 100%,rgba(0,0,0,.25),transparent 60%);
+  background-attachment:fixed}
+h1,h2,h3{font-family:var(--f-display);line-height:1.1;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,3.4rem);font-weight:800}
+h2{font-size:clamp(1.5rem,4vw,2.1rem);font-weight:800}
+h3{font-size:1.2rem;font-weight:600}
+p{margin:0}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.wrap{max-width:1100px;margin:0 auto;padding:0 18px}
+
+/* header */
+header{position:sticky;top:0;z-index:20;background:rgba(23,48,43,.94);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.hbar{display:flex;align-items:center;gap:14px;padding:10px 18px;max-width:1100px;margin:0 auto}
+.logo{font-family:var(--f-display);font-weight:800;font-size:1.25rem;display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--chalk);white-space:nowrap}
+.logo b{background:var(--yellow);color:#1b1b1b;border-radius:8px;padding:0 7px;font-family:var(--f-mono);font-size:1rem}
+nav{display:flex;gap:4px;overflow-x:auto;flex:1;scrollbar-width:none}
+nav a{color:var(--muted);text-decoration:none;padding:7px 12px;border-radius:999px;white-space:nowrap;font-weight:700;font-size:.95rem}
+nav a:hover{color:var(--chalk);background:var(--panel)}
+nav a.on{background:var(--chalk);color:var(--bg)}
+.xpchip{display:flex;align-items:center;gap:8px;white-space:nowrap;font-size:.85rem}
+.xpbar{width:64px;height:8px;border-radius:99px;background:var(--panel2);overflow:hidden}
+.xpbar i{display:block;height:100%;background:var(--yellow)}
+.iconbtn{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 9px;font-size:.85rem}
+@media (max-width:700px){.hbar{flex-wrap:wrap}.logo{order:1}.xpchip{order:2;margin-left:auto}nav{order:3;flex-basis:100%}}
+
+main{padding:26px 0 60px}
+.view{display:none}
+.view.on{display:block}
+.stack{display:flex;flex-direction:column;gap:18px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.eyebrow{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:11px 18px;font-weight:700;background:var(--chalk);color:var(--bg);text-decoration:none}
+.btn:hover{filter:brightness(1.08)}
+.btn.y{background:var(--yellow);color:#1b1b1b}
+.btn.ghost{background:transparent;color:var(--chalk);border:1px solid var(--line)}
+.btn.red{background:var(--coral);color:#1b0b09}
+.btn.sm{padding:7px 12px;font-size:.9rem}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1.2fr 1fr;gap:26px;align-items:center;margin-bottom:28px}
+@media (max-width:820px){.hero{grid-template-columns:1fr}}
+.hero p.lead{font-size:1.15rem;color:var(--muted);margin-top:12px;max-width:58ch}
+.board{background:#10241f;border:6px solid #6b4b2e;border-radius:12px;padding:18px;box-shadow:inset 0 0 40px rgba(0,0,0,.4)}
+.board .chalkline{font-family:var(--f-mono);font-size:clamp(1.3rem,4vw,1.9rem);letter-spacing:.18em;text-align:right}
+.board .steps{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;margin:10px 0}
+.board .steps span{font-family:var(--f-mono);font-size:.82rem;background:rgba(255,255,255,.07);border-radius:6px;padding:3px 7px}
+.hl-y{color:var(--yellow)} .hl-c{color:var(--cyan)}
+
+.mode{display:flex;flex-direction:column;gap:10px;text-decoration:none;color:var(--chalk);transition:transform .15s}
+.mode:hover{transform:translateY(-3px);border-color:rgba(255,210,63,.6)}
+.mode .tag{align-self:flex-start;font-size:.75rem;font-weight:700;border-radius:99px;padding:2px 10px;background:var(--panel2);color:var(--muted)}
+.mode .go{margin-top:auto;font-weight:700;color:var(--yellow)}
+.mode.danger{background:linear-gradient(160deg,#3a1f1b,var(--panel) 70%)}
+
+.techgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.tech{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:left;display:flex;flex-direction:column;gap:2px}
+.tech .x{font-family:var(--f-mono);font-weight:800;font-size:1.3rem}
+.tech .d{font-size:.82rem;color:var(--muted);line-height:1.3}
+.stars{color:var(--yellow);letter-spacing:2px;font-size:.9rem}
+.stars .off{color:rgba(243,241,231,.2)}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--panel2);border-radius:99px;padding:6px 13px;font-weight:700;font-family:var(--f-mono)}
+.chip.on{background:var(--yellow);color:#1b1b1b;border-color:var(--yellow)}
+.chip.txt{font-family:var(--f-body)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label,.field .lbl{font-weight:700;font-size:.9rem;color:var(--muted)}
+input[type=text],input[type=number]{background:#132824;border:1px solid var(--line);border-radius:10px;padding:9px 12px;min-width:0}
+.switch{display:flex;align-items:center;gap:10px;cursor:pointer}
+.switch input{width:20px;height:20px;accent-color:var(--yellow)}
+
+/* impara */
+.learn{display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start}
+@media (max-width:900px){.learn{grid-template-columns:1fr}}
+.learn>*,.stack>*{min-width:0}
+.rule{border-left:4px solid var(--yellow);padding:4px 0 4px 12px;display:flex;flex-direction:column;gap:2px}
+.rule b{font-size:.85rem;color:var(--muted)}
+.gloss dt{font-weight:700;color:var(--yellow)}
+.gloss dd{margin:0 0 8px 0;color:var(--muted);font-size:.95rem}
+.work{padding:20px 0 6px}
+.cells{display:grid;grid-template-columns:repeat(var(--n,6),minmax(0,46px));gap:6px;justify-content:center;margin:0 auto}
+.cell{min-width:0;aspect-ratio:46/56;border-radius:10px;display:grid;place-items:center;font-family:var(--f-mono);font-weight:800;font-size:clamp(.95rem,5.4vw,1.7rem);background:#132824;border:2px solid transparent;position:relative}
+.cell.blank{background:transparent}
+.cell.zero{color:var(--muted)}
+.cell.num{border-color:var(--yellow);color:var(--yellow);background:rgba(255,210,63,.1)}
+.cell.nb{border-color:var(--cyan);color:var(--cyan);background:rgba(98,219,227,.1)}
+.cell.cur{border:2px dashed var(--chalk);animation:blink 1.2s infinite}
+.cell.done{color:var(--ok)}
+.cell .cap{position:absolute;top:-18px;font-size:.62rem;font-family:var(--f-body);font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.cell.num .cap{color:var(--yellow)} .cell.nb .cap{color:var(--cyan)}
+@keyframes blink{50%{border-color:transparent}}
+.times{font-family:var(--f-mono);font-size:1.3rem;color:var(--muted);text-align:center;margin-top:6px}
+@media (max-width:520px){.cells{gap:3px}.cell{border-radius:7px;border-width:2px}.cell .cap{display:none}.work{padding-top:6px}}
+.rline{height:2px;background:var(--chalk);opacity:.5;margin:8px auto;max-width:520px}
+.infobar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0}
+.pill{border-radius:99px;padding:4px 12px;background:var(--panel2);font-size:.9rem}
+.pill b{font-family:var(--f-mono)}
+.pill.y{color:var(--yellow)} .pill.c{color:var(--cyan)}
+.say{background:#132824;border-radius:12px;padding:10px 14px;text-align:center;font-size:1.02rem}
+.say:empty{display:none}
+.log{display:flex;flex-direction:column;gap:4px;max-height:220px;overflow:auto;font-family:var(--f-mono);font-size:.85rem;color:var(--muted)}
+.log div:first-child{color:var(--chalk)}
+
+/* keypad */
+.kp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:330px;margin:0 auto;width:100%}
+.kp button{border:0;border-radius:12px;padding:11px 0;font-family:var(--f-mono);font-weight:800;font-size:1.35rem;background:var(--panel2);color:var(--chalk);touch-action:manipulation;user-select:none}
+.kp button:active{transform:scale(.95)}
+.kp .ok{background:var(--yellow);color:#1b1b1b}
+.kp .del{background:#33413d}
+.ans{display:block;font-family:var(--f-mono);font-weight:800;font-size:clamp(1.8rem,6vw,2.6rem);letter-spacing:.12em;text-align:center;min-height:1.5em;border-bottom:3px solid var(--line);padding:2px 8px;margin:0 auto 12px;max-width:360px;word-break:break-all}
+.ans .ph{color:rgba(243,241,231,.3);font-size:.5em;letter-spacing:.06em;vertical-align:middle}
+.ans.rtl::before{content:"◂ ";font-size:.5em;color:var(--muted);vertical-align:middle}
+.shake{animation:shake .35s}
+@keyframes shake{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+.flash-ok{animation:fok .5s}
+@keyframes fok{0%{box-shadow:0 0 0 0 rgba(134,224,143,.7)}100%{box-shadow:0 0 0 18px rgba(134,224,143,0)}}
+
+/* solo */
+.hud{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.hud .big{font-family:var(--f-mono);font-weight:800;font-size:1.6rem}
+.tbar{height:10px;background:var(--panel2);border-radius:99px;overflow:hidden;margin:10px 0 4px}
+.tbar i{display:block;height:100%;background:var(--yellow);transition:width .25s linear}
+.prob{font-family:var(--f-mono);font-weight:800;font-size:clamp(2.2rem,9vw,4rem);text-align:center;margin:18px 0 10px;letter-spacing:.04em}
+.prob .z{color:rgba(243,241,231,.28)}
+.prob .op{color:var(--yellow)}
+.fb{text-align:center;min-height:1.6em;font-weight:700}
+.fb.ok{color:var(--ok)} .fb.no{color:var(--coral)}
+.stat{display:flex;flex-direction:column;gap:2px}
+.stat b{font-family:var(--f-mono);font-size:1.6rem}
+.errs{display:flex;flex-direction:column;gap:8px}
+.errs .er{display:flex;justify-content:space-between;gap:10px;align-items:center;background:var(--panel2);border-radius:10px;padding:8px 12px;flex-wrap:wrap}
+
+/* duel overlay */
+.overlay{position:fixed;inset:0;z-index:50;background:var(--bg);display:none}
+.overlay.on{display:flex}
+.duel{flex:1;display:grid;grid-template-columns:1fr auto 1fr;height:100%}
+.pl{display:flex;flex-direction:column;gap:10px;padding:16px;justify-content:center;position:relative;min-height:0}
+.pl.red{background:linear-gradient(180deg,rgba(255,107,91,.14),transparent)}
+.pl.blue{background:linear-gradient(180deg,rgba(122,167,255,.14),transparent)}
+.pl-head{display:flex;justify-content:space-between;align-items:center;font-family:var(--f-display);font-weight:800;font-size:1.3rem}
+.pl.red .pl-head{color:var(--coral)} .pl.blue .pl-head{color:var(--blue)}
+.pl-score{font-family:var(--f-mono);font-size:2rem}
+.pl .prob{margin:4px 0;font-size:clamp(1.8rem,5vw,3rem)}
+.pl .kp button{padding:8px 0}
+.lockmask{position:absolute;inset:0;background:rgba(10,10,10,.6);display:none;place-items:center;font-family:var(--f-display);font-size:1.6rem;font-weight:800;color:var(--coral)}
+.pl.locked .lockmask{display:grid}
+.mid{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:8px;border-left:1px dashed var(--line);border-right:1px dashed var(--line);font-size:.85rem;color:var(--muted);text-align:center}
+@media (orientation:portrait) and (max-width:900px){
+  .pl{gap:6px;padding:10px}
+  .duel{grid-template-columns:1fr;grid-template-rows:1fr auto 1fr}
+  .pl.red{transform:rotate(180deg)}
+  .mid{flex-direction:row;border:0;border-top:1px dashed var(--line);border-bottom:1px dashed var(--line)}
+  .pl .prob{font-size:2rem}
+  .pl .kp{max-width:300px}.pl .kp button{padding:6px 0;font-size:1.15rem}
+  .pl .ans{font-size:1.6rem;margin-bottom:6px}
+}
+.turnwrap{flex:1;display:flex;flex-direction:column;max-width:760px;margin:0 auto;padding:16px;gap:12px;overflow:auto}
+.teams{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.team{border-radius:14px;padding:12px 16px;border:2px solid transparent;background:var(--panel)}
+.team.red{color:var(--coral)} .team.blue{color:var(--blue)}
+.team.act{border-color:currentColor;box-shadow:0 0 22px -6px currentColor}
+.team .pl-score{color:var(--chalk)}
+.banner{text-align:center;font-family:var(--f-display);font-weight:800;font-size:1.4rem}
+.winner{position:absolute;inset:0;background:rgba(14,28,25,.94);display:none;flex-direction:column;gap:16px;align-items:center;justify-content:center;text-align:center;padding:20px;z-index:3}
+.winner.on{display:flex}
+
+/* escape */
+#view-escape.on{display:block}
+.esc{background:var(--esc);border:1px solid #4a2a25;border-radius:18px;padding:18px;position:relative;overflow:hidden}
+.esc.alarm{animation:alarm 1.4s infinite}
+@keyframes alarm{50%{box-shadow:inset 0 0 70px rgba(255,60,40,.45)}}
+.esc-hud{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between}
+.clock{font-family:var(--f-mono);font-weight:800;font-size:2.2rem;color:var(--coral)}
+.o2{flex:1;min-width:160px}
+.o2 .tbar i{background:linear-gradient(90deg,var(--coral),#ffb35b)}
+.map{display:flex;gap:6px;align-items:center;margin:14px 0;flex-wrap:wrap}
+.map span{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-mono);font-weight:800;background:var(--esc2);border:2px solid #4a2a25;color:var(--muted);font-size:.9rem}
+.map span.done{background:var(--ok);color:#10210f;border-color:var(--ok)}
+.map span.cur{border-color:var(--yellow);color:var(--yellow)}
+.map i{flex:0 0 14px;height:2px;background:#4a2a25}
+.scene{border-radius:14px;padding:18px;background:var(--esc2);border:1px solid #4a2a25;display:flex;flex-direction:column;gap:14px;position:relative}
+.scene h2{color:#ffd9b0}
+.scene .story{max-width:65ch;color:#e9d7cc}
+.scene .story b{color:var(--yellow);font-family:var(--f-mono)}
+.sc-laser{background-image:repeating-linear-gradient(115deg,transparent 0 46px,rgba(255,50,50,.22) 46px 48px),linear-gradient(var(--esc2),var(--esc2))}
+.sc-serra{background-image:radial-gradient(circle at 15% 80%,rgba(130,224,143,.18),transparent 40%),radial-gradient(circle at 85% 20%,rgba(130,224,143,.12),transparent 35%)}
+.sc-server{background-image:repeating-linear-gradient(90deg,rgba(98,219,227,.06) 0 2px,transparent 2px 22px)}
+.sc-reattore{background-image:radial-gradient(circle at 50% 120%,rgba(255,160,60,.35),transparent 60%)}
+.sc-ascensore{background-image:linear-gradient(90deg,transparent 48%,rgba(255,255,255,.06) 48% 52%,transparent 52%)}
+.locks{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.lock{background:#140e0d;border:2px solid #4a2a25;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px;text-align:left;color:var(--chalk)}
+.lock.act{border-color:var(--yellow)}
+.lock.solved{border-color:var(--ok);opacity:.85}
+.lock .q{font-family:var(--f-mono);font-weight:800;font-size:1.3rem}
+.lock .ans{font-size:1.6rem;margin:0;max-width:none;text-align:left}
+.lock .st{font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.lock.solved .st{color:var(--ok)}
+.hints{display:flex;gap:8px;flex-wrap:wrap}
+.hintbox{background:#140e0d;border:1px dashed #7a4a3e;border-radius:12px;padding:12px;font-size:.95rem;display:none}
+.hintbox.on{display:block}
+.vials{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.vial{background:#140e0d;border:2px solid #355a3a;border-radius:40px 40px 14px 14px;padding:16px 10px;text-align:center;color:var(--chalk);display:flex;flex-direction:column;gap:6px}
+.vial .q{font-family:var(--f-mono);font-weight:800;font-size:1.2rem}
+.vial.sel{border-color:var(--yellow);box-shadow:0 0 18px -4px var(--yellow)}
+.vial.solved{border-color:var(--ok);background:rgba(134,224,143,.12)}
+.tokens{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.token{font-family:var(--f-mono);font-weight:800;font-size:1.1rem;border-radius:10px;border:1px solid #7a4a3e;background:#140e0d;padding:8px 14px;color:var(--chalk)}
+.token.used{opacity:.25;pointer-events:none}
+.wires{display:flex;flex-direction:column;gap:12px}
+.wire{display:flex;align-items:center;gap:12px;border:0;background:transparent;padding:0;color:var(--chalk);text-align:left}
+.wire .cable{flex:1;height:14px;border-radius:99px;position:relative}
+.wire .tagw{font-family:var(--f-mono);font-weight:800;font-size:1.15rem;background:#140e0d;border:1px solid #4a2a25;border-radius:8px;padding:4px 10px;min-width:110px;text-align:center}
+.wire.cut .cable{background:repeating-linear-gradient(90deg,currentColor 0 45%,transparent 45% 55%,currentColor 55%) !important;opacity:.5}
+.wire:hover .tagw{border-color:var(--yellow)}
+.penalty{position:absolute;right:24px;top:18px;font-family:var(--f-mono);font-weight:800;color:var(--coral);font-size:1.4rem;animation:rise 1.2s forwards;pointer-events:none}
+@keyframes rise{to{transform:translateY(-40px);opacity:0}}
+.esc-end{display:flex;flex-direction:column;gap:14px;align-items:flex-start}
+.cert{border:2px dashed var(--yellow);border-radius:14px;padding:16px;width:100%;max-width:560px}
+.modal{position:fixed;inset:0;z-index:90;background:rgba(8,18,16,.72);display:none;align-items:center;justify-content:center;padding:16px}
+.modal.on{display:flex}
+.modal-box{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;max-width:460px;width:100%;max-height:calc(100% - 32px);overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+/* stanze live */
+.hostwrap{flex:1;display:flex;flex-direction:column;max-width:1200px;margin:0 auto;width:100%;padding:16px 20px;gap:14px;overflow:auto}
+.hostbar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.hostbody{display:flex;flex-direction:column;gap:16px;flex:1}
+.lobby{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+@media (max-width:700px){.lobby{grid-template-columns:1fr}}
+.joinurl{font-size:clamp(1.1rem,3vw,1.8rem);font-weight:800;color:var(--chalk);word-break:break-all}
+.pinbig{font-family:var(--f-mono);font-weight:800;font-size:clamp(3rem,11vw,7.5rem);color:var(--yellow);letter-spacing:.06em;line-height:1}
+.qr{background:var(--chalk);padding:12px;border-radius:12px;justify-self:center}
+.qr img,.qr canvas{display:block;max-width:100%}
+.plist{display:flex;flex-wrap:wrap;gap:8px}
+.plist button{border:1px solid var(--line);background:var(--panel2);border-radius:99px;padding:7px 14px;font-weight:700;font-size:1.05rem}
+.plist button.kick{background:var(--coral);color:#1b0b09}
+.hclock{font-family:var(--f-mono);font-weight:800;font-size:clamp(2.4rem,7vw,4.5rem);text-align:center;color:var(--yellow);line-height:1}
+.hclock.sm{font-size:1.8rem}
+.hprob{font-size:clamp(2.6rem,9vw,6rem)}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bars .b{display:grid;grid-template-columns:110px 1fr 40px;gap:10px;align-items:center}
+.bars .b i{display:block;height:22px;border-radius:6px;min-width:3px}
+.lb{display:flex;flex-direction:column;gap:6px}
+.lb .r{display:grid;grid-template-columns:36px 1fr auto;gap:10px;align-items:center;background:var(--panel2);border-radius:10px;padding:8px 12px}
+.lb .r.fin{outline:2px solid var(--ok)}
+.lb .r .n{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb .r .pr{grid-column:2/4;height:6px;background:#132824;border-radius:99px;overflow:hidden}
+.lb .r .pr i{display:block;height:100%;background:var(--yellow)}
+.lb .pos{font-family:var(--f-mono);font-weight:800;color:var(--muted)}
+.podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:12px;align-items:end;max-width:760px;margin:0 auto;width:100%}
+.podium div{background:var(--panel);border-radius:14px 14px 0 0;padding:14px;text-align:center;display:flex;flex-direction:column;gap:4px;border-top:4px solid var(--line)}
+.podium .p1{min-height:220px;border-top-color:var(--yellow)}.podium .p2{min-height:170px;border-top-color:#c9d3d0}.podium .p3{min-height:140px;border-top-color:#d89a62}
+.podium b{font-family:var(--f-display);font-size:1.3rem;overflow-wrap:anywhere}
+.podium .pos{font-family:var(--f-mono);font-size:2rem;font-weight:800}
+.gwrap{max-width:520px;margin:0 auto}
+.pininput{font-family:var(--f-mono);font-size:2rem;letter-spacing:.3em;text-align:center;font-weight:800}
+.gtop{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--chalk);color:var(--bg);padding:10px 18px;border-radius:12px;font-weight:700;z-index:80;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.on{opacity:1}
+footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+<header>
+  <div class="hbar">
+    <a class="logo" href="#home"><b>×11</b> Trachtenberg Lab</a>
+    <nav id="nav">
+      <a href="#home" data-v="home">Home</a>
+      <a href="#impara" data-v="impara">Impara</a>
+      <a href="#solo" data-v="solo">Sfida solo</a>
+      <a href="#duello" data-v="duello">Duello e squadre</a>
+      <a href="#escape" data-v="escape">Escape room</a>
+      <a href="#stanza" data-v="stanza">Stanza live</a>
+      <a href="#gioca" data-v="gioca">Entra con PIN</a>
+    </nav>
+    <div class="xpchip"><span id="lvlname">Apprendista</span><span class="xpbar"><i id="xpfill" style="width:0%"></i></span><span class="mono" id="xptxt">0 XP</span>
+      <button class="iconbtn" id="sndbtn" aria-pressed="true" title="Attiva o disattiva i suoni">Suoni sì</button></div>
+  </div>
+</header>
+
+<main class="wrap">
+<!-- HOME -->
+<section class="view" id="view-home">
+  <div class="hero">
+    <div>
+      <div class="eyebrow">Calcolo veloce · metodo Trachtenberg</div>
+      <h1>Moltiplica senza tabelline, da destra a sinistra.</h1>
+      <p class="lead">Ogni moltiplicazione per 2, 3, 4, 5, 6, 7, 8, 9, 11 e 12 diventa una piccola regola: guardi una cifra e la sua vicina, fai un'operazione semplice e scrivi. Allenati, sfida i compagni e prova a uscire dal laboratorio del Prof. T prima che si chiuda.</p>
+      <div class="row" style="margin-top:18px">
+        <a class="btn y" href="#impara">Comincia dal × 11</a>
+        <a class="btn ghost" href="#gioca">Entra con PIN</a>
+        <a class="btn ghost" href="#escape">Vai all'escape room</a>
+      </div>
+    </div>
+    <div class="board" aria-label="Esempio: 4232 per 11">
+      <div class="eyebrow" style="color:#cfe3d9">Esempio alla lavagna</div>
+      <div class="chalkline" style="margin-top:8px"><span class="muted">0</span>4<span class="hl-y">2</span><span class="hl-c">3</span>2 × 11</div>
+      <div class="steps"><span>0+4 = 4</span><span>4+2 = 6</span><span class="hl-y">2+3 = 5</span><span>3+2 = 5</span><span>2+0 = 2</span></div>
+      <div class="chalkline" style="border-top:2px solid rgba(255,255,255,.4);padding-top:6px">4 6 <span class="hl-y">5</span> 5 2</div>
+      <p style="font-size:.9rem;color:#cfe3d9;margin-top:10px">Regola del × 11: <b class="hl-y">cifra</b> + <b class="hl-c">vicino</b> (la cifra alla sua destra). Si parte da destra.</p>
+    </div>
+  </div>
+
+  <div class="grid g4" style="margin-bottom:28px">
+    <a class="card mode" href="#impara"><span class="tag">Passo passo</span><h3>Impara</h3><p class="muted">Ogni regola spiegata con la cifra e il vicino evidenziati. Scrivi tu il risultato, una cifra alla volta.</p><span class="go">Apri le lezioni →</span></a>
+    <a class="card mode" href="#solo"><span class="tag">1 giocatore</span><h3>Sfida solo</h3><p class="muted">60, 90 o 120 secondi. Le risposte giuste di fila fanno salire il moltiplicatore di punti.</p><span class="go">Batti il tuo record →</span></a>
+    <a class="card mode" href="#duello"><span class="tag">2 giocatori o 2 squadre</span><h3>Duello e squadre</h3><p class="muted">Testa a testa sullo stesso schermo, oppure a turni sulla LIM con il «rubapalla».</p><span class="go">Sfida qualcuno →</span></a>
+    <a class="card mode danger" href="#escape"><span class="tag">6 stanze · 15 minuti</span><h3>Fuga dal Laboratorio T</h3><p class="muted">Ogni porta si apre solo con il calcolo giusto. Ogni errore costa ossigeno.</p><span class="go">Entra, se hai coraggio →</span></a>
+    <a class="card mode" href="#stanza"><span class="tag">Tutta la classe · PIN e QR</span><h3>Stanza live</h3><p class="muted">Come Kahoot o Wayground: il prof crea la stanza sulla LIM, gli studenti entrano dal telefono e la classifica si aggiorna in tempo reale.</p><span class="go">Crea una stanza →</span></a>
+  </div>
+
+  <div class="card stack">
+    <div class="row" style="justify-content:space-between"><h2>Le tue regole</h2><span class="muted" style="font-size:.9rem">★ lezione completata · ★★ 10 risposte giuste in gara · ★★★ 30</span></div>
+    <div class="techgrid" id="homeTech"></div>
+  </div>
+
+  <div class="card" style="margin-top:18px">
+    <div class="eyebrow">Chi era Trachtenberg</div>
+    <p style="margin-top:6px;max-width:75ch">Jakow Trachtenberg era un ingegnere russo. Durante la Seconda guerra mondiale fu imprigionato dai nazisti e, per tenere la mente allenata, inventò a memoria un sistema per fare calcoli lunghi senza tabelline. Dopo la guerra fondò a Zurigo un istituto dove il metodo veniva insegnato anche a ragazzi che a scuola facevano fatica con la matematica.</p>
+  </div>
+</section>
+
+<!-- IMPARA -->
+<section class="view" id="view-impara">
+  <div class="stack">
+    <div><div class="eyebrow">Lezioni</div><h2>Scegli una regola e prova</h2></div>
+    <div class="chips" id="learnChips"></div>
+    <div class="learn">
+      <div class="stack">
+        <div class="card stack" id="ruleCard"></div>
+      </div>
+      <div class="card stack" id="labCard">
+        <div class="row" style="justify-content:space-between">
+          <div class="row">
+            <button class="chip txt on" id="mGuided">Scrivo io</button>
+            <button class="chip txt" id="mWatch">Guardo l'animazione</button>
+            <button class="chip txt" id="glossBtn" aria-haspopup="dialog" title="Cifra, vicino, metà, riporto, zero davanti">? Aiuto parole</button>
+          </div>
+          <div class="row">
+            <input type="number" id="customN" placeholder="Il tuo numero" min="1" max="99999999" style="width:140px" aria-label="Scegli il numero da moltiplicare">
+            <button class="btn sm ghost" id="useN">Usa</button>
+            <button class="btn sm" id="newN">Nuovo numero</button>
+          </div>
+        </div>
+        <div class="work"><div id="rowTop" class="cells"></div><div class="times" id="multLbl"></div><div class="rline"></div><div id="rowBot" class="cells"></div></div>
+        <div class="infobar" id="infoBar"></div>
+        <div id="learnInput">
+          <div class="kp" id="learnKp"></div>
+          <div class="row" style="justify-content:center;margin-top:10px">
+            <button class="btn sm ghost" id="hintBtn">Suggerimento</button>
+            <button class="btn sm ghost" id="showBtn">Mostra questa cifra</button>
+          </div>
+        </div>
+        <div class="say" id="say"></div>
+        <div><div class="eyebrow" style="margin-bottom:6px">Passaggi fatti</div><div class="log" id="log"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Controlla con la prova del 9</h3>
+      <p class="muted" style="margin-top:6px;max-width:75ch">Somma le cifre di ogni numero fino a ottenere una cifra sola (9 conta come 0). Moltiplica le due cifre ottenute e riducile ancora: deve venire la stessa cifra del risultato. Esempio: 4232 → 2, 11 → 2; 2 × 2 = 4. Risultato 46552 → 22 → 4. Torna.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SOLO -->
+<section class="view" id="view-solo">
+  <div class="card stack" id="soloSetup">
+    <div><div class="eyebrow">Contro il tempo</div><h2>Sfida solo</h2></div>
+    <div class="field"><span class="lbl">Regole in gara</span><div class="chips" id="soloTech"></div></div>
+    <div class="grid g2">
+      <div class="field"><span class="lbl">Lunghezza dei numeri</span><div class="chips" id="soloDiff"></div></div>
+      <div class="field"><span class="lbl">Durata</span><div class="chips" id="soloDur"></div></div>
+    </div>
+    <div class="grid g2">
+      <div class="field"><label for="soloCode">Codice sfida di classe (facoltativo)</label><input type="text" id="soloCode" placeholder="es. 3B-LUNEDI" maxlength="20"><span class="muted" style="font-size:.85rem">Chi usa lo stesso codice riceve gli stessi numeri nello stesso ordine.</span></div>
+      <div class="field"><span class="lbl">Come scrivi le cifre</span><label class="switch"><input type="checkbox" id="soloRtl" checked> Da destra a sinistra, come nel metodo</label></div>
+    </div>
+    <div class="row"><button class="btn y" id="soloStart">Via!</button><span class="muted" id="soloBest"></span></div>
+  </div>
+
+  <div class="card" id="soloGame" style="display:none">
+    <div class="hud">
+      <div class="stat"><span class="muted">Tempo</span><b id="sTime">60</b></div>
+      <div class="stat" style="text-align:center"><span class="muted">Serie</span><b id="sCombo">×1.0</b></div>
+      <div class="stat" style="text-align:right"><span class="muted">Punti</span><b id="sScore">0</b></div>
+    </div>
+    <div class="tbar"><i id="sBar" style="width:100%"></i></div>
+    <div class="prob" id="sProb"></div>
+    <div class="ans" id="sAns"></div>
+    <div class="fb" id="sFb"></div>
+    <div class="kp" id="soloKp"></div>
+    <div class="row" style="justify-content:center;margin-top:12px"><button class="btn sm ghost" id="sSkip">Passa</button><button class="btn sm ghost" id="sStop">Termina</button></div>
+  </div>
+
+  <div class="card stack" id="soloEnd" style="display:none"></div>
+</section>
+
+<!-- DUELLO -->
+<section class="view" id="view-duello">
+  <div class="card stack">
+    <div><div class="eyebrow">Due giocatori o due squadre</div><h2>Duello e squadre</h2></div>
+    <div class="field"><span class="lbl">Modalità</span><div class="chips" id="dMode"></div><p class="muted" id="dModeTxt" style="font-size:.92rem;max-width:70ch"></p></div>
+    <div class="grid g2">
+      <div class="field"><label for="dRed">Nome rosso</label><input type="text" id="dRed" value="Squadra Rossa" maxlength="18"></div>
+      <div class="field"><label for="dBlue">Nome blu</label><input type="text" id="dBlue" value="Squadra Blu" maxlength="18"></div>
+    </div>
+    <div class="field"><span class="lbl">Regole in gara</span><div class="chips" id="dTech"></div></div>
+    <div class="grid g2">
+      <div class="field"><span class="lbl">Lunghezza dei numeri</span><div class="chips" id="dDiff"></div></div>
+      <div class="field"><span class="lbl">Si vince a</span><div class="chips" id="dTarget"></div></div>
+    </div>
+    <label class="switch"><input type="checkbox" id="dRtl" checked> Cifre da destra a sinistra</label>
+    <div><button class="btn y" id="dStart">Inizia il duello</button></div>
+  </div>
+</section>
+
+<!-- STANZA (docente) -->
+<section class="view" id="view-stanza">
+  <div class="card stack">
+    <div><div class="eyebrow">Per il docente · da proiettare sulla LIM</div><h2>Crea una stanza live</h2><p class="muted" style="max-width:70ch">Gli studenti entrano dal telefono con il PIN o il QR code, senza registrarsi. Tu tieni questa pagina aperta sulla LIM per tutta la partita.</p></div>
+    <div id="rResume"></div>
+    <div class="field"><span class="lbl">Modalità</span><div class="chips" id="rMode"></div><p class="muted" id="rModeTxt" style="font-size:.92rem;max-width:70ch"></p></div>
+    <div class="field"><span class="lbl">Regole in gara</span><div class="chips" id="rTech"></div></div>
+    <div class="grid g2">
+      <div class="field"><span class="lbl">Lunghezza dei numeri</span><div class="chips" id="rDiff"></div></div>
+      <div class="field"><span class="lbl">Numero di domande</span><div class="chips" id="rCount"></div></div>
+    </div>
+    <div class="grid g2">
+      <div class="field"><span class="lbl" id="rSecLbl">Secondi per domanda</span><div class="chips" id="rSec"></div></div>
+      <div class="field" id="rMinWrap"><span class="lbl">Tempo massimo per tutta la prova</span><div class="chips" id="rMin"></div></div>
+    </div>
+    <div class="row"><button class="btn y" id="rCreate">Crea la stanza</button><span class="muted" id="rMsg"></span></div>
+  </div>
+  <div class="card" style="margin-top:16px"><h3>Sei uno studente?</h3><p class="muted" style="margin-top:4px">Vai su <a href="#gioca" style="color:var(--yellow)">Entra con PIN</a> e scrivi il codice che vedi sulla LIM.</p></div>
+</section>
+
+<!-- GIOCA (studente) -->
+<section class="view" id="view-gioca"><div id="gioca" class="gwrap"></div></section>
+
+<!-- ESCAPE -->
+<section class="view" id="view-escape">
+  <div class="esc" id="esc"></div>
+</section>
+</main>
+<footer>Trachtenberg Lab · per le prime classi · i progressi restano solo su questo dispositivo</footer>
+
+<div class="overlay" id="duelOv"></div>
+<div class="overlay" id="hostOv"></div>
+<div class="toast" id="toast"></div>
+<div class="modal" id="glossModal" role="dialog" aria-modal="true" aria-labelledby="glossTitle">
+  <div class="modal-box">
+    <div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 id="glossTitle">Le parole del metodo</h3><button class="iconbtn" id="glossClose" aria-label="Chiudi">Chiudi</button></div>
+    <dl class="gloss" style="margin:0">
+            <dt>Cifra</dt><dd>La cifra del numero che sta proprio sopra il posto dove scrivi.</dd>
+            <dt>Vicino</dt><dd>La cifra alla destra della cifra. Se non c'è, vale 0.</dd>
+            <dt>Metà</dt><dd>Dimezza e butta via i decimali: metà di 7 = 3, metà di 1 = 0.</dd>
+            <dt>Riporto</dt><dd>Se ottieni un numero a due cifre, scrivi le unità e porta le decine al passo dopo.</dd>
+            <dt>Zero davanti</dt><dd>Immagina sempre uno 0 a sinistra del numero: lì nasce l'ultima cifra del risultato.</dd>
+          </dl>
+  </div>
+</div>
+
+
+<script>
+/* ================= MOTORE TRACHTENBERG ================= */
+const half=x=>Math.floor(x/2);
+function parts(m,num,nb,pos){
+  const odd=num%2===1, P=[];
+  switch(m){
+    case 11:P.push(num,nb);break;
+    case 12:P.push(2*num,nb);break;
+    case 6:P.push(num);if(odd)P.push(5);P.push(half(nb));break;
+    case 7:P.push(2*num);if(odd)P.push(5);P.push(half(nb));break;
+    case 5:P.push(half(nb));if(odd)P.push(5);break;
+    case 2:P.push(2*num);break;
+    case 9:if(pos==='first')P.push(10-num);else if(pos==='middle')P.push(9-num,nb);else P.push(nb-1);break;
+    case 8:if(pos==='first')P.push(2*(10-num));else if(pos==='middle')P.push(2*(9-num),nb);else P.push(nb-2);break;
+    case 4:if(pos==='first'){P.push(10-num);if(odd)P.push(5);}else if(pos==='middle'){P.push(9-num);if(odd)P.push(5);P.push(half(nb));}else P.push(half(nb)-1);break;
+    case 3:if(pos==='first'){P.push(2*(10-num));if(odd)P.push(5);}else if(pos==='middle'){P.push(2*(9-num));if(odd)P.push(5);P.push(half(nb));}else P.push(half(nb)-2);break;
+  }
+  return P;
+}
+function expr(m,num,nb,pos){
+  const odd=num%2===1, h=half(nb), five=odd?' + 5':'', met=`metà di ${nb} (${h})`;
+  switch(m){
+    case 11:return `${num} + ${nb}`;
+    case 12:return `2×${num} + ${nb}`;
+    case 6:return `${num}${five} + ${met}`;
+    case 7:return `2×${num}${five} + ${met}`;
+    case 5:return `${met}${five}`;
+    case 2:return `2×${num}`;
+    case 9:return pos==='first'?`10 − ${num}`:pos==='middle'?`9 − ${num} + ${nb}`:`${nb} − 1`;
+    case 8:return pos==='first'?`2×(10 − ${num})`:pos==='middle'?`2×(9 − ${num}) + ${nb}`:`${nb} − 2`;
+    case 4:return pos==='first'?`10 − ${num}${five}`:pos==='middle'?`9 − ${num}${five} + ${met}`:`${met} − 1`;
+    case 3:return pos==='first'?`2×(10 − ${num})${five}`:pos==='middle'?`2×(9 − ${num})${five} + ${met}`:`${met} − 2`;
+  }
+}
+function solve(n,m){
+  const s='0'+String(n),L=s.length,steps=[];let carry=0,out='';
+  for(let i=L-1;i>=0;i--){
+    const num=+s[i],nb=i+1<L?+s[i+1]:0,pos=i===L-1?'first':(i===0?'last':'middle');
+    const raw=parts(m,num,nb,pos).reduce((a,b)=>a+b,0),tot=raw+carry,w=((tot%10)+10)%10,c=Math.floor(tot/10);
+    steps.push({i,num,nb,pos,raw,cin:carry,tot,w,c,ex:expr(m,num,nb,pos)});
+    out=w+out;carry=c;
+  }
+  if(carry>0){steps.push({final:true,w:carry,i:-1});out=carry+out;}
+  return {s,steps,result:out.replace(/^0+(?=\d)/,'')};
+}
+function stepText(st){
+  if(st.final)return `Riporto rimasto → scrivo ${st.w} davanti`;
+  let t=`${st.ex} = ${st.raw}`;
+  if(st.cin)t+=` · + riporto ${st.cin} = ${st.tot}`;
+  t+=` → scrivo ${st.w}`;
+  if(st.c)t+=`, riporto ${st.c}`;
+  return t;
+}
+
+/* ================= DATI DELLE REGOLE ================= */
+const ORDER=[11,12,6,7,5,9,8,4,3,2];
+const TECH={
+ 11:{d:'Somma il vicino',rules:[['Ogni passo','cifra + vicino']]},
+ 12:{d:'Raddoppia e somma il vicino',rules:[['Ogni passo','doppio della cifra + vicino']]},
+ 6:{d:'Metà del vicino, +5 se dispari',rules:[['Ogni passo','cifra + metà del vicino'],['Se la cifra è dispari','aggiungi anche 5']]},
+ 7:{d:'Doppio + metà del vicino, +5 se dispari',rules:[['Ogni passo','doppio della cifra + metà del vicino'],['Se la cifra è dispari','aggiungi anche 5']]},
+ 5:{d:'Solo metà del vicino, +5 se dispari',rules:[['Ogni passo','metà del vicino (la cifra non si usa)'],['Se la cifra è dispari','aggiungi 5']]},
+ 9:{d:'Da 10, da 9, poi −1',rules:[['Primo passo, a destra','10 − cifra'],['Passi centrali','9 − cifra + vicino'],['Ultimo passo, sotto lo zero','prima cifra a sinistra − 1']]},
+ 8:{d:'Come il 9, ma raddoppi',rules:[['Primo passo, a destra','(10 − cifra) × 2'],['Passi centrali','(9 − cifra) × 2 + vicino'],['Ultimo passo, sotto lo zero','prima cifra a sinistra − 2']]},
+ 4:{d:'Da 10 e da 9, metà del vicino',rules:[['Primo passo, a destra','10 − cifra, +5 se dispari'],['Passi centrali','9 − cifra + metà del vicino, +5 se dispari'],['Ultimo passo, sotto lo zero','metà della prima cifra a sinistra − 1']]},
+ 3:{d:'Come il 4, ma raddoppi',rules:[['Primo passo, a destra','(10 − cifra) × 2, +5 se dispari'],['Passi centrali','(9 − cifra) × 2 + metà del vicino, +5 se dispari'],['Ultimo passo, sotto lo zero','metà della prima cifra a sinistra − 2']]},
+ 2:{d:'Raddoppia ogni cifra',rules:[['Ogni passo','doppio della cifra (il vicino non serve)']]}
+};
+const DIFF={facile:[2,3],medio:[3,4],difficile:[5,6]};
+const DIFFLBL={facile:'2–3 cifre',medio:'3–4 cifre',difficile:'5–6 cifre'};
+
+/* ================= UTILITÀ ================= */
+const $=id=>document.getElementById(id);
+const fmt=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hashStr(s){let h=2166136261;for(const ch of s.toUpperCase().trim()){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+function makeRng(code){return code&&code.trim()?mulberry(hashStr(code)):mulberry((Math.random()*2**32)>>>0)}
+function genNum(rng,minD,maxD){const d=minD+Math.floor(rng()*(maxD-minD+1));let s=String(1+Math.floor(rng()*9));for(let i=1;i<d;i++)s+=Math.floor(rng()*10);return +s}
+function pick(rng,a){return a[Math.floor(rng()*a.length)]}
+function shuffle(rng,a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>e.classList.remove('on'),1800)}
+function shake(el){el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake')}
+function flashOk(el){el.classList.remove('flash-ok');void el.offsetWidth;el.classList.add('flash-ok')}
+const probHTML=(n,m)=>`<span class="z">0</span>${n} <span class="op">×</span> ${m}`;
+
+/* ================= PROFILO ================= */
+const LEVELS=['Apprendista','Calcolatore','Fulmine','Mago dei numeri','Leggenda Trachtenberg'];
+let P={xp:0,stats:{},best:{},sound:true,esc:null};
+try{const raw=localStorage.getItem('ttlab-v1');if(raw)P=Object.assign(P,JSON.parse(raw))}catch(e){}
+function save(){try{localStorage.setItem('ttlab-v1',JSON.stringify(P))}catch(e){}}
+function st(m){return P.stats[m]||(P.stats[m]={guided:0,correct:0})}
+function stars(m){const s=st(m);return (s.guided>0?1:0)+(s.correct>=10?1:0)+(s.correct>=30?1:0)}
+function starHTML(n){return '<span class="stars">'+'★'.repeat(n)+'<span class="off">'+'★'.repeat(3-n)+'</span></span>'}
+function addXP(n){const before=Math.floor(P.xp/100);P.xp+=n;save();renderXP();if(Math.floor(P.xp/100)>before)toast('Nuovo livello: '+LEVELS[Math.min(LEVELS.length-1,Math.floor(P.xp/100))])}
+function renderXP(){const l=Math.floor(P.xp/100);$('lvlname').textContent=LEVELS[Math.min(LEVELS.length-1,l)];$('xpfill').style.width=(P.xp%100)+'%';$('xptxt').textContent=P.xp+' XP'}
+function renderHomeTech(){$('homeTech').innerHTML=ORDER.map(m=>`<a class="tech" href="#impara" data-m="${m}" style="text-decoration:none;color:inherit"><span class="x">× ${m}</span><span class="d">${TECH[m].d}</span>${starHTML(stars(m))}</a>`).join('');
+  $('homeTech').querySelectorAll('a').forEach(a=>a.onclick=()=>{L.m=+a.dataset.m;L.n=null})}
+
+/* ================= SUONI ================= */
+let actx=null;
+function beep(f,d=.12,type='sine',vol=.08){if(!P.sound)return;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();const o=actx.createOscillator(),g=actx.createGain();o.type=type;o.frequency.value=f;g.gain.value=vol;o.connect(g);g.connect(actx.destination);const t=actx.currentTime;g.gain.exponentialRampToValueAtTime(.0001,t+d);o.start(t);o.stop(t+d)}catch(e){}}
+const sOk=()=>{beep(660,.1);setTimeout(()=>beep(990,.14),90)};
+const sNo=()=>beep(150,.25,'square',.05);
+function renderSnd(){$('sndbtn').textContent=P.sound?'Suoni sì':'Suoni no';$('sndbtn').setAttribute('aria-pressed',P.sound)}
+$('sndbtn').onclick=()=>{P.sound=!P.sound;save();renderSnd();if(P.sound)sOk()};
+
+/* ================= TASTIERINO E RISPOSTA ================= */
+let keyTarget=null;
+document.addEventListener('keydown',e=>{
+  if(!keyTarget)return;const tg=e.target.tagName;if(tg==='INPUT'||tg==='SELECT'||tg==='TEXTAREA')return;
+  if(/^[0-9]$/.test(e.key)){keyTarget(e.key);e.preventDefault()}
+  else if(e.key==='Backspace'){keyTarget('del');e.preventDefault()}
+  else if(e.key==='Enter'){keyTarget('ok');e.preventDefault()}
+});
+function keypad(el,onKey,{noOk=false}={}){
+  const keys=['1','2','3','4','5','6','7','8','9','del','0',noOk?'':'ok'];
+  el.innerHTML='';el.className='kp';
+  keys.forEach(k=>{const b=document.createElement('button');b.type='button';
+    if(k==='del'){b.textContent='⌫';b.className='del';b.setAttribute('aria-label','Cancella')}
+    else if(k==='ok'){b.textContent='OK';b.className='ok'}
+    else if(k===''){b.style.visibility='hidden';b.tabIndex=-1}
+    else b.textContent=k;
+    if(k)b.addEventListener('click',()=>onKey(k));el.appendChild(b)});
+}
+class Answer{constructor(el,rtl){this.el=el;this.rtl=rtl;this.v='';this.render()}
+  push(d){if(this.v.length>=12)return;this.v=this.rtl?d+this.v:this.v+d;this.render()}
+  del(){this.v=this.rtl?this.v.slice(1):this.v.slice(0,-1);this.render()}
+  clear(){this.v='';this.render()}
+  render(){this.el.classList.toggle('rtl',this.rtl);this.el.innerHTML=this.v?esc(this.v):'<span class="ph">'+(this.rtl?'scrivi da destra':'risultato')+'</span>'}
+  val(){return this.v.replace(/^0+(?=\d)/,'')}}
+
+/* ================= ROUTING ================= */
+const VIEWS=['home','impara','solo','duello','escape','stanza','gioca'];
+function route(){
+  const v=VIEWS.includes(location.hash.slice(1))?location.hash.slice(1):'home';
+  if(v!=='solo'&&S.running)soloEnd(true);
+  if(v!=='escape')escPause();else escResume();
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on',s.id==='view-'+v));
+  document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  keyTarget=null;
+  if(v==='home')renderHomeTech();
+  if(v==='impara')learnOpen();
+  if(v==='solo'&&!S.running)soloSetupRender();
+  if(v==='escape')escRender();
+  if(v==='stanza')roomSetupRender();
+  if(v==='gioca')giocaOpen();
+  window.scrollTo(0,0);
+}
+window.addEventListener('hashchange',route);
+
+/* ================= IMPARA ================= */
+const L={m:11,n:null,sol:null,k:0,err:0,errTot:0,mode:'guided',timer:null,done:false};
+function learnOpen(){
+  $('learnChips').innerHTML=ORDER.map(m=>`<button class="chip ${m===L.m?'on':''}" data-m="${m}">× ${m}</button>`).join('');
+  $('learnChips').querySelectorAll('button').forEach(b=>b.onclick=()=>{L.m=+b.dataset.m;L.n=null;learnOpen()});
+  const t=TECH[L.m];
+  $('ruleCard').innerHTML=`<div class="row" style="justify-content:space-between"><h2>× ${L.m}</h2>${starHTML(stars(L.m))}</div><p class="muted">${t.d}. Lavora da destra a sinistra, una cifra alla volta.</p>`+t.rules.map(r=>`<div class="rule"><b>${r[0]}</b><span>${r[1]}</span></div>`).join('')+`<button class="btn sm ghost" id="ruleToSolo" style="align-self:flex-start">Allenati in gara con il × ${L.m}</button>`;
+  $('ruleToSolo').onclick=()=>{SS.techs=[L.m];location.hash='solo'};
+  if(!L.n)L.n=genNum(Math.random,3,4);
+  learnStart(L.n);
+}
+function learnStart(n){
+  clearInterval(L.timer);L.n=n;L.sol=solve(n,L.m);L.k=0;L.err=0;L.errTot=0;L.done=false;
+  $('log').innerHTML='';
+  keypad($('learnKp'),learnKey,{noOk:true});
+  keyTarget=learnKey;
+  $('mGuided').classList.toggle('on',L.mode==='guided');$('mWatch').classList.toggle('on',L.mode==='watch');
+  $('learnInput').style.display=L.mode==='guided'?'':'none';
+  learnRender();
+  if(L.mode==='watch')L.timer=setInterval(()=>{if(L.done){clearInterval(L.timer);return}learnAccept(true)},1700);
+}
+function learnRender(){
+  const s=L.sol.s,steps=L.sol.steps,cur=steps[L.k],len=s.length;
+  let top=`<div class="cell blank"></div>`;
+  for(let i=0;i<len;i++){let c='cell'+(i===0?' zero':'');let cap='';
+    if(cur&&!cur.final&&!L.done){if(i===cur.i){c+=' num';cap='cifra'}else if(i===cur.i+1){c+=' nb';cap='vicino'}}
+    top+=`<div class="${c}">${cap?`<span class="cap">${cap}</span>`:''}${s[i]}</div>`}
+  $('rowTop').innerHTML=top;$('rowTop').style.setProperty('--n',len+1);$('rowBot').style.setProperty('--n',len+1);$('multLbl').textContent='× '+L.m;
+  const written={};steps.slice(0,L.k).forEach(x=>written[x.i]=x.w);
+  let bot='';const hasFinal=steps[steps.length-1].final;
+  const fcell=hasFinal&&L.k>=steps.length?`<div class="cell done">${steps[steps.length-1].w}</div>`:(cur&&cur.final?`<div class="cell cur"></div>`:`<div class="cell blank"></div>`);
+  bot+=fcell;
+  for(let i=0;i<len;i++){if(written[i]!==undefined)bot+=`<div class="cell done">${written[i]}</div>`;else if(cur&&!cur.final&&cur.i===i)bot+=`<div class="cell cur"></div>`;else bot+=`<div class="cell blank"></div>`}
+  $('rowBot').innerHTML=bot;
+  $('learnInput').style.display=(L.mode==='guided'&&!L.done)?'':'none';
+  const posName={first:'primo passo',middle:'passo centrale',last:'ultimo passo (sotto lo zero)'};
+  if(L.done){
+    $('infoBar').innerHTML=`<span class="pill">Risultato: <b>${fmt(L.sol.result)}</b></span><span class="pill">Errori: <b>${L.errTot}</b></span>`;
+    $('say').innerHTML=`<b style="color:var(--ok)">Fatto!</b> ${fmt(L.n)} × ${L.m} = <b class="mono">${fmt(L.sol.result)}</b>. <button class="btn sm y" id="againBtn" style="margin-left:8px">Un altro</button>`;
+    $('againBtn').onclick=()=>learnStart(genNum(Math.random,3,5));
+    return;
+  }
+  if(cur.final){$('infoBar').innerHTML=`<span class="pill">Passo ${L.k+1} di ${steps.length}</span><span class="pill y">Riporto rimasto: <b>${cur.w}</b> · scrivilo davanti</span>`;
+    $('say').textContent=L.mode==='watch'?stepText(cur):'';return}
+  $('infoBar').innerHTML=`<span class="pill">Passo ${L.k+1} di ${steps.length} · ${(L.m>=3&&L.m<=4)||L.m===8||L.m===9?posName[cur.pos]:'stessa regola'}</span><span class="pill y">Cifra <b>${cur.num}</b></span><span class="pill c">Vicino <b>${cur.nb}</b></span><span class="pill">Riporto <b>${cur.cin}</b></span>`;
+  if(L.mode==='watch')$('say').textContent=stepText(cur);
+  else $('say').innerHTML=L.err>=2?`Suggerimento: <span class="mono">${cur.ex}${cur.cin?' + riporto '+cur.cin:''}</span> = ? Scrivi solo le unità.`:'';
+}
+function learnKey(k){
+  if(L.done||L.mode!=='guided'||k==='ok'||k==='del')return;
+  const cur=L.sol.steps[L.k];
+  if(+k===cur.w){sOk();learnAccept(false)}
+  else{sNo();L.err++;L.errTot++;shake($('rowBot'));learnRender();if(L.err<2)$('say').innerHTML=`<span style="color:var(--coral)">${k} non è giusto.</span> Riprova: guarda cifra, vicino e riporto.`}
+}
+function learnAccept(auto){
+  const cur=L.sol.steps[L.k];
+  $('log').insertAdjacentHTML('afterbegin',`<div>${esc(stepText(cur))}</div>`);
+  L.k++;L.err=0;
+  if(L.k>=L.sol.steps.length){L.done=true;
+    if(!auto){st(L.m).guided++;addXP(L.errTot===0?15:8);sOk();setTimeout(sOk,180)}}
+  learnRender();
+}
+$('mGuided').onclick=()=>{L.mode='guided';learnStart(L.n)};
+$('mWatch').onclick=()=>{L.mode='watch';learnStart(L.n)};
+$('newN').onclick=()=>learnStart(genNum(Math.random,3,5));
+$('useN').onclick=()=>{const v=parseInt($('customN').value,10);if(v>0&&v<1e8)learnStart(v);else toast('Scrivi un numero intero da 1 a 99.999.999')};
+$('hintBtn').onclick=()=>{L.err=Math.max(L.err,2);learnRender()};
+$('showBtn').onclick=()=>{if(!L.done){L.errTot++;learnAccept(true)}};
+
+/* ================= CHIP HELPER ================= */
+function chipGroup(el,opts,get,set,multi=false,txt=false){
+  el.innerHTML=opts.map(o=>`<button class="chip ${txt?'txt':''}" data-v="${o[0]}">${o[1]}</button>`).join('');
+  const paint=()=>el.querySelectorAll('button').forEach(b=>{const v=isNaN(+b.dataset.v)?b.dataset.v:+b.dataset.v;b.classList.toggle('on',multi?get().includes(v):get()===v)});
+  el.querySelectorAll('button').forEach(b=>b.onclick=()=>{const v=isNaN(+b.dataset.v)?b.dataset.v:+b.dataset.v;
+    if(multi){let a=get().slice();if(v==='all')a=ORDER.slice();else if(a.includes(v)){if(a.length>1)a=a.filter(x=>x!==v)}else a.push(v);set(a)}else set(v);paint()});
+  paint();
+}
+const techOpts=[...ORDER.map(m=>[m,'× '+m]),['all','Tutte']];
+
+/* ================= SFIDA SOLO ================= */
+const SS={techs:[11,12],diff:'facile',dur:60};
+const S={running:false};
+function bestKey(){return SS.diff+'-'+SS.dur}
+function soloSetupRender(){
+  $('soloSetup').style.display='';$('soloGame').style.display='none';$('soloEnd').style.display='none';
+  chipGroup($('soloTech'),techOpts,()=>SS.techs,v=>SS.techs=v,true);
+  chipGroup($('soloDiff'),Object.keys(DIFF).map(k=>[k,DIFFLBL[k]]),()=>SS.diff,v=>{SS.diff=v;soloBestTxt()},false,true);
+  chipGroup($('soloDur'),[[60,'60 s'],[90,'90 s'],[120,'120 s']],()=>SS.dur,v=>{SS.dur=v;soloBestTxt()},false,true);
+  soloBestTxt();
+}
+function soloBestTxt(){const b=P.best[bestKey()];$('soloBest').textContent=b?`Record (${DIFFLBL[SS.diff]}, ${SS.dur} s): ${b} punti`:'Nessun record ancora per questa combinazione'}
+$('soloStart').onclick=()=>{
+  Object.assign(S,{running:true,rng:makeRng($('soloCode').value),code:$('soloCode').value.trim(),t:SS.dur,score:0,streak:0,ok:0,no:0,log:[],errs:[],last:performance.now()});
+  $('soloSetup').style.display='none';$('soloGame').style.display='';$('soloEnd').style.display='none';
+  S.ans=new Answer($('sAns'),$('soloRtl').checked);
+  keypad($('soloKp'),soloKey);keyTarget=soloKey;
+  soloNext();S.int=setInterval(soloTick,200);soloHud();
+};
+function soloNext(){const [a,b]=DIFF[SS.diff];S.m=pick(S.rng,SS.techs);S.n=genNum(S.rng,a,b);S.t0=performance.now();$('sProb').innerHTML=probHTML(S.n,S.m);S.ans.clear()}
+function soloTick(){const now=performance.now();S.t-=(now-S.last)/1000;S.last=now;if(S.t<=0){S.t=0;soloEnd(false)}soloHud()}
+function mult(){return 1+Math.min(S.streak,5)*.2}
+function soloHud(){$('sTime').textContent=Math.ceil(S.t);$('sScore').textContent=S.score;$('sCombo').textContent='×'+mult().toFixed(1);$('sBar').style.width=(S.t/SS.dur*100)+'%';$('sBar').style.background=S.t<10?'var(--coral)':''}
+function soloKey(k){
+  if(!S.running)return;
+  if(k==='del')return S.ans.del();
+  if(k!=='ok')return S.ans.push(k);
+  if(!S.ans.v)return;
+  const right=String(S.n*S.m);
+  if(S.ans.val()===right){
+    S.streak++;const pts=Math.round(String(S.n).length*10*mult());S.score+=pts;S.ok++;st(S.m).correct++;
+    $('sFb').className='fb ok';$('sFb').textContent=`Giusto! +${pts}`;sOk();flashOk($('sAns'));soloNext();
+  }else{
+    S.streak=0;S.no++;S.errs.push({n:S.n,m:S.m,given:S.ans.v});
+    $('sFb').className='fb no';$('sFb').textContent=`No: ${fmt(S.n)} × ${S.m} = ${fmt(right)}`;sNo();shake($('sAns'));soloNext();
+  }
+  soloHud();
+}
+$('sSkip').onclick=()=>{if(!S.running)return;S.streak=0;S.errs.push({n:S.n,m:S.m,given:'(passato)'});$('sFb').className='fb';$('sFb').textContent='Passato';soloNext();soloHud()};
+$('sStop').onclick=()=>soloEnd(false);
+function soloEnd(silent){
+  clearInterval(S.int);if(!S.running)return;S.running=false;keyTarget=null;
+  if(silent)return;
+  const k=bestKey(),rec=!P.best[k]||S.score>P.best[k];if(rec&&S.score>0)P.best[k]=S.score;
+  const xp=S.ok*2;save();if(xp)addXP(xp);
+  $('soloGame').style.display='none';const e=$('soloEnd');e.style.display='';
+  const acc=S.ok+S.errs.length?Math.round(S.ok/(S.ok+S.errs.length)*100):0;
+  e.innerHTML=`<div><div class="eyebrow">Tempo scaduto</div><h2>${S.score} punti${rec&&S.score>0?' · nuovo record!':''}</h2></div>
+  <div class="grid g4"><div class="stat"><span class="muted">Giuste</span><b>${S.ok}</b></div><div class="stat"><span class="muted">Sbagliate o passate</span><b>${S.errs.length}</b></div><div class="stat"><span class="muted">Precisione</span><b>${acc}%</b></div><div class="stat"><span class="muted">XP guadagnati</span><b>+${xp}</b></div></div>
+  ${S.code?`<p class="muted">Codice sfida: <b class="mono">${esc(S.code)}</b>. Confronta il punteggio con chi ha usato lo stesso codice.</p>`:''}
+  ${S.errs.length?`<div class="stack"><h3>Da rivedere</h3><div class="errs">${S.errs.slice(0,8).map((x,i)=>`<div class="er"><span class="mono">${fmt(x.n)} × ${x.m} = ${fmt(x.n*x.m)} <span class="muted">(tu: ${esc(x.given)})</span></span><button class="btn sm ghost" data-i="${i}">Rivedi passo passo</button></div>`).join('')}</div></div>`:''}
+  <div class="row"><button class="btn y" id="soloAgain">Rigioca</button><button class="btn ghost" id="soloBack">Cambia impostazioni</button></div>`;
+  e.querySelectorAll('.er button').forEach(b=>b.onclick=()=>{const x=S.errs[+b.dataset.i];L.m=x.m;L.n=x.n;L.mode='guided';location.hash='impara'});
+  $('soloAgain').onclick=()=>$('soloStart').click();$('soloBack').onclick=soloSetupRender;
+}
+
+/* ================= DUELLO ================= */
+const DS={mode:'h2h',techs:[11,12,6],diff:'facile',target:10};
+const MODETXT={h2h:'Stesso schermo, ognuno con il suo tastierino. Stesso calcolo per tutti e due: chi risponde giusto per primo prende il punto. Chi sbaglia resta bloccato 3 secondi. Su telefono o tablet in verticale la metà rossa si capovolge: mettetevi uno di fronte all\'altro.',
+ turn:'Per la LIM. Le squadre giocano a turno con 25 secondi: risposta giusta vale 2 punti. Se la squadra sbaglia o finisce il tempo, l\'altra squadra ha 10 secondi per rubare il punto.'};
+chipGroup($('dMode'),[['h2h','Testa a testa'],['turn','A turni con rubapalla']],()=>DS.mode,v=>{DS.mode=v;$('dModeTxt').textContent=MODETXT[v]},false,true);
+$('dModeTxt').textContent=MODETXT[DS.mode];
+chipGroup($('dTech'),techOpts,()=>DS.techs,v=>DS.techs=v,true);
+chipGroup($('dDiff'),Object.keys(DIFF).map(k=>[k,DIFFLBL[k]]),()=>DS.diff,v=>DS.diff=v,false,true);
+chipGroup($('dTarget'),[[5,'5 punti'],[10,'10 punti'],[15,'15 punti']],()=>DS.target,v=>DS.target=v,false,true);
+let D=null;
+$('dStart').onclick=()=>{
+  const names=[$('dRed').value.trim()||'Rossi',$('dBlue').value.trim()||'Blu'],rtl=$('dRtl').checked;
+  D={names,rtl,score:[0,0],rng:Math.random,busy:false};
+  const ov=$('duelOv');ov.classList.add('on');document.body.style.overflow='hidden';
+  if(DS.mode==='h2h')h2hBuild();else turnBuild();
+};
+function dGen(){const [a,b]=DIFF[DS.diff];D.m=pick(D.rng,DS.techs);D.n=genNum(D.rng,a,b)}
+function dClose(){const ov=$('duelOv');ov.classList.remove('on');ov.innerHTML='';document.body.style.overflow='';clearInterval(D&&D.int);keyTarget=null;D=null}
+function winnerHTML(){return `<div class="winner" id="dWin"></div>`}
+function showWinner(w){const el=$('dWin');el.classList.add('on');addXP(10);
+  el.innerHTML=`<div class="eyebrow">Fine partita</div><h1 style="color:${w===0?'var(--coral)':'var(--blue)'}">Vince ${esc(D.names[w])}!</h1><p class="mono" style="font-size:1.6rem">${D.score[0]} – ${D.score[1]}</p><div class="row"><button class="btn y" id="dAgain">Rivincita</button><button class="btn ghost" id="dExit2">Esci</button></div>`;
+  sOk();setTimeout(sOk,200);setTimeout(sOk,400);
+  $('dAgain').onclick=()=>{dClose();$('dStart').click()};$('dExit2').onclick=dClose}
+function h2hBuild(){
+  const ov=$('duelOv');
+  const side=(p,cls)=>`<div class="pl ${cls}" id="pl${p}"><div class="pl-head"><span>${esc(D.names[p])}</span><span class="pl-score" id="sc${p}">0</span></div><div class="prob" id="pr${p}"></div><div class="ans" id="an${p}"></div><div id="kp${p}"></div><div class="lockmask">Bloccato…</div></div>`;
+  ov.innerHTML=`<div class="duel">${side(0,'red')}<div class="mid"><span>Si vince a <b>${DS.target}</b></span><button class="btn sm ghost" id="dExit">Esci</button></div>${side(1,'blue')}</div>${winnerHTML()}`;
+  D.ans=[new Answer($('an0'),D.rtl),new Answer($('an1'),D.rtl)];D.locked=[false,false];
+  [0,1].forEach(p=>keypad($('kp'+p),k=>h2hKey(p,k)));
+  $('dExit').onclick=dClose;h2hRound();
+}
+function h2hRound(){dGen();D.busy=false;[0,1].forEach(p=>{$('pr'+p).innerHTML=probHTML(D.n,D.m);D.ans[p].clear()})}
+function h2hKey(p,k){
+  if(D.busy||D.locked[p])return;const a=D.ans[p];
+  if(k==='del')return a.del();if(k!=='ok')return a.push(k);if(!a.v)return;
+  if(a.val()===String(D.n*D.m)){
+    D.busy=true;D.score[p]++;$('sc'+p).textContent=D.score[p];sOk();flashOk($('pl'+p));
+    const o=1-p;$('an'+o).innerHTML=`<span class="ph">${fmt(D.n*D.m)}</span>`;
+    if(D.score[p]>=DS.target)return setTimeout(()=>{if(D)showWinner(p)},500);
+    setTimeout(()=>{if(D)h2hRound()},1000);
+  }else{
+    sNo();shake($('an'+p));D.locked[p]=true;$('pl'+p).classList.add('locked');a.clear();
+    setTimeout(()=>{if(!D)return;D.locked[p]=false;$('pl'+p).classList.remove('locked')},3000);
+  }
+}
+function turnBuild(){
+  const ov=$('duelOv');
+  ov.innerHTML=`<div class="turnwrap"><div class="row" style="justify-content:space-between"><span class="muted">Si vince a <b>${DS.target}</b></span><button class="btn sm ghost" id="dExit">Esci</button></div>
+  <div class="teams"><div class="team red" id="tm0"><div class="pl-head"><span>${esc(D.names[0])}</span><span class="pl-score" id="sc0">0</span></div></div><div class="team blue" id="tm1"><div class="pl-head"><span>${esc(D.names[1])}</span><span class="pl-score" id="sc1">0</span></div></div></div>
+  <div class="banner" id="tBan"></div><div class="tbar"><i id="tBar"></i></div><div class="prob" id="tProb"></div><div class="ans" id="tAns"></div><div class="fb" id="tFb"></div><div id="tKp"></div></div>${winnerHTML()}`;
+  D.turn=0;D.ans=new Answer($('tAns'),D.rtl);keypad($('tKp'),turnKey);keyTarget=turnKey;$('dExit').onclick=dClose;turnStart();
+}
+function turnStart(){dGen();D.steal=false;D.active=D.turn;D.max=25;D.t=25;D.last=performance.now();D.busy=false;$('tProb').innerHTML=probHTML(D.n,D.m);D.ans.clear();$('tFb').textContent='';turnPaint();clearInterval(D.int);D.int=setInterval(turnTick,200)}
+function turnPaint(){[0,1].forEach(p=>$('tm'+p).classList.toggle('act',p===D.active));$('tBan').innerHTML=(D.steal?'Rubapalla! Tocca a ':'Tocca a ')+`<span style="color:${D.active===0?'var(--coral)':'var(--blue)'}">${esc(D.names[D.active])}</span>`;$('tBar').style.background=D.active===0?'var(--coral)':'var(--blue)'}
+function turnTick(){const now=performance.now();D.t-=(now-D.last)/1000;D.last=now;$('tBar').style.width=Math.max(0,D.t/D.max*100)+'%';if(D.t<=0&&!D.busy)turnFail('Tempo scaduto')}
+function turnFail(msg){
+  sNo();
+  if(!D.steal){D.steal=true;D.active=1-D.turn;D.max=10;D.t=10;D.last=performance.now();D.ans.clear();$('tFb').className='fb no';$('tFb').textContent=msg+'. Possibilità di rubare!';turnPaint()}
+  else{D.busy=true;$('tFb').className='fb no';$('tFb').textContent=`${msg}. Era ${fmt(D.n*D.m)}`;turnNext(1800)}
+}
+function turnNext(ms){clearInterval(D.int);setTimeout(()=>{if(!D)return;D.turn=1-D.turn;turnStart()},ms)}
+function turnKey(k){
+  if(!D||D.busy)return;if(k==='del')return D.ans.del();if(k!=='ok')return D.ans.push(k);if(!D.ans.v)return;
+  if(D.ans.val()===String(D.n*D.m)){
+    D.busy=true;const pts=D.steal?1:2;D.score[D.active]+=pts;$('sc'+D.active).textContent=D.score[D.active];sOk();
+    $('tFb').className='fb ok';$('tFb').textContent=`Giusto! +${pts} a ${D.names[D.active]}`;
+    if(D.score[D.active]>=DS.target){clearInterval(D.int);const w=D.active;return setTimeout(()=>{if(D)showWinner(w)},700)}
+    turnNext(1300);
+  }else{shake($('tAns'));turnFail('Sbagliato')}
+}
+
+/* ================= ESCAPE ROOM ================= */
+const E={rtl:true,phase:'intro',diff:'normale',code:'',team:'',t:900,total:900,room:0,wrong:0,hints:0,int:null,paused:false};
+const ROOMS=[
+ {title:'Il portone d\'ingresso',sc:'',techs:[11],build:r=>{const a=r.num();return{story:`Sei entrato nel laboratorio abbandonato del Prof. T per recuperare il suo quaderno segreto. Il portone si è richiuso alle tue spalle e una voce metallica annuncia: «Sigillatura totale tra 15 minuti». Sul tastierino c'è un post-it: <i>Codice = numero del laboratorio × 11</i>. Sulla targa: <b>LAB ${a}</b>.`,locks:[{label:'Tastierino del portone',n:a,m:11}]}}},
+ {title:'Il corridoio dei laser',sc:'sc-laser',techs:[12],build:r=>{const a=r.num();return{story:`Dodici emettitori laser sbarrano il corridoio. Ognuno assorbe <b>${a}</b> milliwatt. Il pannello di spegnimento chiede l'energia totale di tutti e 12 gli emettitori, in milliwatt.`,locks:[{label:'Energia totale (mW)',n:a,m:12}]}}},
+ {title:'La serra delle spore',sc:'sc-serra',techs:[5,6],type:'match'},
+ {title:'La sala server',sc:'sc-server',techs:[9],type:'wires'},
+ {title:'Il reattore',sc:'sc-reattore',techs:[7,8],build:r=>{const a=r.num(),b=r.num();return{story:`Il reattore si sta surriscaldando. Servono due codici: le barre di raffreddamento sono <b>7</b> e ognuna scende di <b>${a}</b> millimetri; la valvola di pressione va aperta di <b>${b}</b> gradi per <b>8</b> volte. Inserisci entrambi i totali.`,locks:[{label:'Raffreddamento',n:a,m:7},{label:'Pressione',n:b,m:8}]}}},
+ {title:'L\'ascensore di emergenza',sc:'sc-ascensore',techs:[4,3],build:r=>{const a=r.num(true);return{story:`Ultima stanza! L'ascensore sale solo se la batteria è carica. Prima carica: <b>${a}</b> unità × 4. Poi il motore triplica la carica: × 3. Il secondo codice compare solo quando inserisci il primo.`,locks:[{label:'Carica della batteria',n:a,m:4},{label:'Spinta del motore',n:null,m:3,chain:true}]}}}
+];
+function escRng(){return E.rng}
+function escNum(small){const [a,b]=E.diff==='esperto'?[4,5]:[3,4];return genNum(E.rng,small?a-1:a,small?b-1:b)}
+function escRender(){
+  const box=$('esc');
+  if(E.phase==='intro'){
+    box.classList.remove('alarm');
+    box.innerHTML=`<div class="scene stack"><div class="eyebrow" style="color:#e9a98f">Escape room</div><h1 style="color:#ffd9b0">Fuga dal Laboratorio T</h1>
+    <p class="story">Sei stanze, 15 minuti. Ogni porta si apre solo con il risultato giusto, calcolato con le regole di Trachtenberg. Un codice sbagliato costa 30 secondi, un taglio sbagliato nella sala server ne costa 60. Gli aiuti ci sono, ma si pagano in tempo.</p>
+    <div class="grid g2"><div class="field"><label for="escTeam">Nome della squadra</label><input type="text" id="escTeam" maxlength="20" value="${esc(E.team)}" placeholder="es. I Fulmini"></div>
+    <div class="field"><label for="escCode">Codice sfida (facoltativo)</label><input type="text" id="escCode" maxlength="20" value="${esc(E.code)}" placeholder="es. 1A-ESCAPE"><span class="muted" style="font-size:.85rem">Stesso codice = stessi numeri per tutte le squadre: vince chi esce con più tempo.</span></div></div>
+    <div class="field"><span class="lbl">Livello</span><div class="chips" id="escDiff"></div></div>
+    <label class="switch"><input type="checkbox" id="escRtl" ${E.rtl?'checked':''}> Cifre da destra a sinistra, come nel metodo</label>
+    <div class="row"><button class="btn red" id="escGo">Entra nel laboratorio</button>${P.esc?`<span class="muted">Miglior fuga su questo dispositivo: ${mmss(P.esc)} rimasti</span>`:''}</div>
+    <p class="muted" style="font-size:.9rem">Regole che servono: × 11, × 12, × 5, × 6, × 9, × 7, × 8, × 4, × 3. Ripassale in <a href="#impara" style="color:var(--yellow)">Impara</a>.</p></div>`;
+    chipGroup($('escDiff'),[['normale','Normale · 3–4 cifre'],['esperto','Esperto · 4–5 cifre']],()=>E.diff,v=>E.diff=v,false,true);
+    $('escGo').onclick=escStart;return;
+  }
+  if(E.phase==='end')return escEndRender();
+  escRoomRender();
+}
+function mmss(t){t=Math.max(0,Math.ceil(t));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')}
+function escStart(){
+  E.team=$('escTeam').value.trim();E.rtl=$('escRtl').checked;E.code=$('escCode').value.trim();
+  E.rng=makeRng(E.code?E.code+'|'+E.diff:'');Object.assign(E,{phase:'play',t:900,room:0,wrong:0,hints:0,paused:false,last:performance.now(),won:false});
+  E.rooms=ROOMS.map(R=>escPrepare(R));
+  clearInterval(E.int);E.int=setInterval(escTick,250);beep(220,.4,'sawtooth',.04);escRender();
+}
+function escPrepare(R){
+  const r={num:s=>escNum(s)};
+  if(R.type==='match'){
+    const items=[[escNum(),5],[escNum(),6],[escNum(),6]].map(([n,m],i)=>({n,m,id:i,solved:false}));
+    const decoys=[items[0].n*5+5,items[1].n*6+6*(1+Math.floor(E.rng()*3))].map(v=>({v,id:-1}));
+    const toks=shuffle(E.rng,[...items.map(x=>({v:x.n*x.m,id:x.id})),...decoys]);
+    return {R,story:`Le spore stanno riempiendo l'aria. Tre valvole d'ossigeno si aprono solo se colleghi a ciascuna la sua dose esatta. Tocca una valvola, poi il numero giusto. Attento: nel cassetto ci sono anche dosi false.`,items,toks,sel:null,kind:'match'};
+  }
+  if(R.type==='wires'){
+    const n=escNum(),v=n*9;const cand=shuffle(E.rng,[v,v+9,v-9,v+18]);
+    return {R,story:`Il server del Prof. T sta per cancellare tutto, porte comprese. Sul monitor lampeggia: <i>TAGLIA IL CAVO CON IL NUMERO <b>${n} × 9</b></i>. Tutti i numeri sui cavi superano la prova del 9: dovrai fare il calcolo vero.`,n,m:9,cand,cut:[],kind:'wires'};
+  }
+  const b=R.build(r);b.locks.forEach(l=>{l.solved=false;l.box=null});return {R,story:b.story,locks:b.locks,act:0,kind:'locks'};
+}
+function escTick(){if(E.phase!=='play'||E.paused)return;const now=performance.now();E.t-=(now-E.last)/1000;E.last=now;if(E.t<=0){E.t=0;escFinish(false)}escHud()}
+function escPause(){if(E.phase==='play'){E.paused=true}}
+function escResume(){if(E.phase==='play'&&E.paused){E.paused=false;E.last=performance.now()}}
+function escPenalty(s,txt){E.t-=s;E.wrong++;sNo();const el=document.createElement('div');el.className='penalty';el.textContent='−'+s+' s';$('esc').appendChild(el);setTimeout(()=>el.remove(),1200);shake($('escScene'));if(txt)toast(txt);if(E.t<=0){E.t=0;escFinish(false)}escHud()}
+function escHud(){const c=$('escClock');if(!c)return;c.textContent=mmss(E.t);$('escO2').style.width=(E.t/E.total*100)+'%';$('esc').classList.toggle('alarm',E.t<180)}
+function escRoomRender(){
+  const rm=E.rooms[E.room],R=rm.R;
+  const map=ROOMS.map((_,i)=>`<span class="${i<E.room?'done':i===E.room?'cur':''}">${i+1}</span>`).join('<i></i>');
+  $('esc').innerHTML=`<div class="esc-hud"><div><div class="eyebrow" style="color:#e9a98f">${E.team?esc(E.team)+' · ':''}Sigillatura tra</div><div class="clock" id="escClock">${mmss(E.t)}</div></div><div class="o2"><div class="muted" style="font-size:.85rem">Ossigeno</div><div class="tbar"><i id="escO2"></i></div></div><button class="btn sm ghost" id="escQuit">Abbandona</button></div>
+  <div class="map" aria-label="Stanze">${map}</div>
+  <div class="scene ${R.sc}" id="escScene"><div class="eyebrow" style="color:#e9a98f">Stanza ${E.room+1} di 6 · regole: ${R.techs.map(m=>'× '+m).join(', ')}</div><h2>${R.title}</h2><p class="story">${rm.story}</p><div id="escPuzzle" class="stack"></div>
+  <div class="hints"><button class="btn sm ghost" id="h1">Aiuto: la regola (−45 s)</button><button class="btn sm ghost" id="h2">Aiuto: tutti i passaggi (−120 s)</button></div><div class="hintbox" id="hintBox"></div></div>`;
+  $('escQuit').onclick=()=>{escFinish(false,true)};
+  $('h1').onclick=()=>{$('h1').disabled=true;E.t-=45;E.hints++;escHud();$('hintBox').classList.add('on');$('hintBox').innerHTML=R.techs.map(m=>`<p><b class="mono" style="color:var(--yellow)">× ${m}</b> · ${TECH[m].rules.map(x=>x[0]+': '+x[1]).join(' · ')}</p>`).join('')};
+  $('h2').onclick=()=>{const p=escPending();if(!p)return;E.t-=120;E.hints++;escHud();const so=solve(p.n,p.m);$('hintBox').classList.add('on');$('hintBox').innerHTML=`<p class="mono" style="margin-bottom:6px">${fmt(p.n)} × ${p.m}, da destra:</p>`+so.steps.map((s,i)=>`<p class="mono" style="font-size:.88rem">${i+1}. ${esc(stepText(s))}</p>`).join('')};
+  escHud();
+  if(rm.kind==='locks')escLocks(rm);else if(rm.kind==='match')escMatch(rm);else escWires(rm);
+}
+function escPending(){const rm=E.rooms[E.room];
+  if(rm.kind==='locks'){const l=rm.locks.find(x=>!x.solved);return l&&l.n?{n:l.n,m:l.m}:null}
+  if(rm.kind==='match'){const it=rm.items.find(x=>!x.solved);return it?{n:it.n,m:it.m}:null}
+  return {n:rm.n,m:rm.m}}
+function escLocks(rm){
+  const pz=$('escPuzzle');
+  pz.innerHTML=`<div class="locks">${rm.locks.map((l,i)=>`<button class="lock" id="lk${i}" type="button"><span class="st" id="lst${i}"></span><span>${l.label}</span><span class="q" id="lq${i}"></span><span class="ans" id="la${i}"></span></button>`).join('')}</div><div id="escKp"></div>`;
+  rm.locks.forEach((l,i)=>{l.box=new Answer($('la'+i),E.rtl);$('lk'+i).onclick=()=>{if(!l.solved&&l.n){rm.act=i;paint()}}});
+  const paint=()=>rm.locks.forEach((l,i)=>{const el=$('lk'+i);el.classList.toggle('act',i===rm.act&&!l.solved);el.classList.toggle('solved',l.solved);
+    $('lst'+i).textContent=l.solved?'Aperto':(l.n?'Chiuso':'In attesa del primo codice');
+    $('lq'+i).innerHTML=l.n?`${fmt(l.n)} × ${l.m}`:'? × '+l.m;if(l.solved)$('la'+i).innerHTML=esc(fmt(l.n*l.m))});
+  const onKey=k=>{const l=rm.locks[rm.act];if(!l||l.solved||!l.n)return;
+    if(k==='del')return l.box.del();if(k!=='ok')return l.box.push(k);if(!l.box.v)return;
+    if(l.box.val()===String(l.n*l.m)){l.solved=true;sOk();flashOk($('lk'+rm.act));
+      const nx=rm.locks.findIndex(x=>!x.solved);
+      if(nx>=0){if(rm.locks[nx].chain)rm.locks[nx].n=l.n*l.m;rm.act=nx;paint()}else{paint();escNextRoom()}}
+    else{l.box.clear();shake($('lk'+rm.act));escPenalty(30,'Codice errato: −30 secondi')}};
+  keypad($('escKp'),onKey);keyTarget=onKey;paint();
+}
+function escMatch(rm){
+  const pz=$('escPuzzle');keyTarget=null;
+  const draw=()=>{pz.innerHTML=`<div class="vials">${rm.items.map(it=>`<button class="vial ${it.solved?'solved':''} ${rm.sel===it.id?'sel':''}" data-id="${it.id}" type="button"><span class="st muted" style="font-size:.8rem">Valvola ${'ABC'[it.id]}</span><span class="q">${fmt(it.n)} × ${it.m}</span><span class="mono">${it.solved?fmt(it.n*it.m):'—'}</span></button>`).join('')}</div>
+    <p class="muted" style="text-align:center">${rm.sel===null?'Tocca una valvola':'Ora tocca la dose giusta per la valvola '+'ABC'[rm.sel]}</p>
+    <div class="tokens">${rm.toks.map((t,i)=>`<button class="token ${t.used?'used':''}" data-i="${i}" type="button">${fmt(t.v)}</button>`).join('')}</div>`;
+    pz.querySelectorAll('.vial').forEach(b=>b.onclick=()=>{const it=rm.items[+b.dataset.id];if(it.solved)return;rm.sel=it.id;draw()});
+    pz.querySelectorAll('.token').forEach(b=>b.onclick=()=>{if(rm.sel===null){toast('Prima scegli una valvola');return}const t=rm.toks[+b.dataset.i],it=rm.items[rm.sel];
+      if(t.v===it.n*it.m){it.solved=true;t.used=true;rm.sel=null;sOk();draw();if(rm.items.every(x=>x.solved))escNextRoom()}
+      else{escPenalty(20,'Dose sbagliata: −20 secondi');}});
+  };draw();
+}
+function escWires(rm){
+  const pz=$('escPuzzle');keyTarget=null;const cols=['#ff6b5b','#62dbe3','#ffd23f','#86e08f'];
+  const draw=()=>{pz.innerHTML=`<div class="wires">${rm.cand.map((v,i)=>`<button class="wire ${rm.cut.includes(i)?'cut':''}" data-i="${i}" type="button" style="color:${cols[i]}" aria-label="Taglia il cavo ${fmt(v)}"><span class="tagw">${fmt(v)}</span><span class="cable" style="background:${cols[i]}"></span></button>`).join('')}</div><p class="muted" style="text-align:center">Tocca il cavo da tagliare.</p>`;
+    pz.querySelectorAll('.wire').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;if(rm.cut.includes(i))return;rm.cut.push(i);
+      if(rm.cand[i]===rm.n*9){sOk();draw();escNextRoom()}else{draw();escPenalty(60,'Scintille! Cavo sbagliato: −60 secondi')}})};draw();
+}
+function escNextRoom(){
+  setTimeout(()=>{if(E.phase!=='play')return;if(E.room>=ROOMS.length-1)return escFinish(true);E.room++;beep(440,.15);setTimeout(()=>beep(660,.2),120);escRender();window.scrollTo(0,0)},700);
+}
+function escFinish(won,quit){
+  clearInterval(E.int);E.phase='end';E.won=won;E.quit=!!quit;keyTarget=null;
+  if(won){E.starsN=E.t>=360?3:E.t>=180?2:1;addXP(30+E.starsN*10);if(!P.esc||E.t>P.esc){P.esc=Math.ceil(E.t);save()}}
+  escRender();
+}
+function escEndRender(){
+  const box=$('esc');box.classList.remove('alarm');
+  if(E.won){box.innerHTML=`<div class="scene esc-end"><div class="eyebrow" style="color:#e9a98f">Missione compiuta</div><h1 style="color:var(--ok)">Sei fuori!</h1><p class="story">La porta dell'ascensore si apre sul tetto e il quaderno del Prof. T è al sicuro nel tuo zaino. Sulla prima pagina c'è scritto: «Chi sa contare non resta mai chiuso dentro».</p>
+    <div class="cert"><div class="row" style="justify-content:space-between"><b>${esc(E.team||'Squadra senza nome')}</b>${starHTML(E.starsN)}</div>
+    <p class="mono" style="font-size:1.8rem;margin:6px 0">${mmss(E.t)} rimasti</p>
+    <p class="muted">Errori: ${E.wrong} · Aiuti usati: ${E.hints} · Livello: ${E.diff}${E.code?` · Codice sfida: <b class="mono">${esc(E.code)}</b>`:''}</p></div>
+    <div class="row"><button class="btn y" id="escAgain">Gioca ancora</button><a class="btn ghost" href="#solo">Allenati in Sfida solo</a></div></div>`;sOk();setTimeout(sOk,250);setTimeout(sOk,500)}
+  else{box.innerHTML=`<div class="scene esc-end"><div class="eyebrow" style="color:#e9a98f">${E.quit?'Missione abbandonata':'Tempo scaduto'}</div><h1 style="color:var(--coral)">Il laboratorio si è sigillato</h1><p class="story">Sei arrivato fino alla stanza ${E.room+1} di 6. Per fortuna il bidello passa ogni mattina alle 7: domani ti apre lui. Nel frattempo, ripassa le regole che ti hanno bloccato.</p>
+    <div class="row">${ROOMS[E.room].techs.map(m=>`<a class="btn ghost sm" href="#impara" data-m="${m}">Ripassa il × ${m}</a>`).join('')}</div>
+    <div class="row"><button class="btn red" id="escAgain">Riprova</button></div></div>`;
+    box.querySelectorAll('a[data-m]').forEach(a=>a.onclick=()=>{L.m=+a.dataset.m;L.n=null})}
+  $('escAgain').onclick=()=>{E.phase='intro';escRender()};
+}
+
+/* ================= STANZE LIVE (Supabase) ================= */
+const SB_URL='https://ewribtaaplofwjsebclm.supabase.co', SB_KEY='sb_publishable_AsBmuUsOL_RSfVqiOY71kw_AIZJmy3p';
+let sb=null;
+function sbc(){if(sb)return sb;if(!window.supabase||SB_URL.indexOf('__')===0)throw new Error('offline');sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false}});return sb}
+async function rpc(fn,args){const {data,error}=await sbc().rpc(fn,args);if(error)throw new Error(error.message);return data}
+const ERRS={room_not_found:'Nessuna stanza aperta con questo PIN. Controlla le cifre.',nick_taken:'Questo nome è già usato nella stanza: scegline un altro.',bad_nick:'Il nome deve avere almeno 2 caratteri.',room_full:'La stanza è piena (massimo 60 giocatori).',too_late:'Tempo scaduto per questa domanda.',not_open:'La domanda non è più aperta.',already:'Hai già risposto a questa domanda.',offline:'Le stanze live funzionano solo sul sito pubblicato: da qui il server non è raggiungibile.',not_player:'Sei stato rimosso dalla stanza.',not_host:'Questa stanza non risulta più tua.'};
+function errMsg(e){const m=String(e&&e.message||e);for(const k in ERRS)if(m.includes(k))return ERRS[k];if(/fetch|network|load failed/i.test(m))return 'Server non raggiungibile: controlla il Wi-Fi e riprova. Nell\'anteprima di Claude le stanze live non funzionano: usa il sito su Netlify.';return 'Errore: '+m}
+let clockOff=0;
+function syncClock(room){if(room&&room.now)clockOff=new Date(room.now).getTime()-Date.now()}
+const srvNow=()=>Date.now()+clockOff;
+function ss(k,v){try{if(v===undefined)return JSON.parse(sessionStorage.getItem(k)||'null');if(v===null)sessionStorage.removeItem(k);else sessionStorage.setItem(k,JSON.stringify(v))}catch(e){return null}}
+const joinUrl=pin=>location.origin+location.pathname+'?pin='+pin+'#gioca';
+const pinFmt=p=>String(p).slice(0,3)+' '+String(p).slice(3);
+function debounce(fn,ms){let t;return()=>{clearTimeout(t);t=setTimeout(fn,ms)}}
+
+/* ---------- impostazioni stanza ---------- */
+const RS={mode:'live',techs:[11,12,6],diff:'facile',count:10,sec:30,min:10};
+const RMODETXT={live:'Stile Kahoot. La LIM mostra lo stesso calcolo a tutti con il conto alla rovescia. Dopo ogni domanda compaiono la soluzione passo passo e la classifica.',
+ self:'Stile Wayground. Ogni studente risponde al suo ritmo sul telefono; sulla LIM vedi avanzamento, risposte giuste e classifica in tempo reale.'};
+function roomSetupRender(){
+  chipGroup($('rMode'),[['live','Tutti insieme'],['self','Ognuno al suo ritmo']],()=>RS.mode,v=>{RS.mode=v;roomSetupRender()},false,true);
+  $('rModeTxt').textContent=RMODETXT[RS.mode];
+  chipGroup($('rTech'),techOpts,()=>RS.techs,v=>RS.techs=v,true);
+  chipGroup($('rDiff'),Object.keys(DIFF).map(k=>[k,DIFFLBL[k]]),()=>RS.diff,v=>RS.diff=v,false,true);
+  chipGroup($('rCount'),[[5,'5'],[10,'10'],[15,'15'],[20,'20']],()=>RS.count,v=>RS.count=v,false,true);
+  $('rSecLbl').textContent=RS.mode==='live'?'Secondi per domanda':'Secondi per prendere il bonus velocità';
+  chipGroup($('rSec'),[[20,'20 s'],[30,'30 s'],[45,'45 s'],[60,'60 s']],()=>RS.sec,v=>RS.sec=v,false,true);
+  $('rMinWrap').style.display=RS.mode==='self'?'':'none';
+  chipGroup($('rMin'),[[0,'Nessuno'],[5,'5 min'],[10,'10 min'],[15,'15 min']],()=>RS.min,v=>RS.min=v,false,true);
+  const saved=ss('tl-host');
+  $('rResume').innerHTML=saved?`<div class="row" style="background:var(--panel2);border-radius:12px;padding:10px 14px"><span>Hai una stanza aperta (PIN <b class="mono">${esc(pinFmt(saved.pin||''))}</b>).</span><button class="btn sm y" id="rResBtn">Riprendi</button><button class="btn sm ghost" id="rResDrop">Dimentica</button></div>`:'';
+  if(saved){$('rResBtn').onclick=()=>hostResume(saved);$('rResDrop').onclick=()=>{ss('tl-host',null);roomSetupRender()}}
+}
+$('rCreate').onclick=async()=>{
+  const btn=$('rCreate');btn.disabled=true;$('rMsg').textContent='Creo la stanza…';
+  try{const [a,b]=DIFF[RS.diff],qs=[];for(let i=0;i<RS.count;i++)qs.push({n:genNum(Math.random,a,b),m:pick(Math.random,RS.techs)});
+    const res=await rpc('tl_create_room',{p_mode:RS.mode,p_settings:{techs:RS.techs,diff:RS.diff,minutes:RS.mode==='self'?RS.min:0},p_questions:qs,p_q_seconds:RS.sec});
+    $('rMsg').textContent='';await hostOpen(res.room,res.host_token);
+  }catch(e){$('rMsg').textContent=errMsg(e)}finally{btn.disabled=false}
+};
+
+/* ---------- schermo del docente ---------- */
+const H={};
+async function hostResume(saved){try{const st=await rpc('tl_host_state',{p_room:saved.room_id,p_token:saved.token});
+  if(st.room.status==='ended'){ss('tl-host',null)}await hostOpen(st.room,saved.token)}catch(e){ss('tl-host',null);$('rMsg').textContent=errMsg(e);roomSetupRender()}}
+async function hostOpen(room,token){
+  hostStop();
+  Object.assign(H,{room,token,players:[],stats:null,questions:null,auto:false,kick:null,confirm:false});
+  syncClock(room);ss('tl-host',{room_id:room.id,token,pin:room.pin});
+  $('hostOv').classList.add('on');document.body.style.overflow='hidden';keyTarget=null;
+  const reload=debounce(hostLoadPlayers,350);
+  H.chan=sbc().channel('h-'+room.id).on('postgres_changes',{event:'*',schema:'public',table:'tl_players',filter:'room_id=eq.'+room.id},reload).subscribe();
+  H.poll=setInterval(hostLoadPlayers,5000);H.tick=setInterval(hostTick,250);
+  await hostLoadState();await hostLoadPlayers();hostRender();
+}
+function hostStop(){clearInterval(H.poll);clearInterval(H.tick);if(H.chan&&sb)sb.removeChannel(H.chan);H.chan=null}
+function hostClose(){hostStop();$('hostOv').classList.remove('on');$('hostOv').innerHTML='';document.body.style.overflow='';if(H.room&&H.room.status==='ended')ss('tl-host',null);roomSetupRender()}
+async function hostLoadState(){const st=await rpc('tl_host_state',{p_room:H.room.id,p_token:H.token});H.room=st.room;H.questions=st.questions;H.stats=st.stats;syncClock(st.room)}
+async function hostLoadPlayers(){if(!H.room)return;try{const {data,error}=await sbc().from('tl_players').select('id,nickname,score,correct,answered,streak,q_pos,last_q,last_correct,last_points,finished').eq('room_id',H.room.id).order('score',{ascending:false}).order('joined_at');if(error)throw error;H.players=data||[];hostRefresh()}catch(e){}}
+async function hostAct(fn,extra){try{const r=await rpc(fn,Object.assign({p_room:H.room.id,p_token:H.token},extra||{}));
+  if(r&&r.room){H.room=r.room;H.stats=r.stats;H.questions=r.questions||H.questions}else if(r&&r.id)H.room=r;syncClock(H.room);await hostLoadPlayers();hostRender()}catch(e){toast(errMsg(e))}}
+function lbHTML(list,opt={}){return `<div class="lb">${list.map((p,i)=>`<div class="r ${opt.prog&&p.finished?'fin':''}"><span class="pos">${i+1}</span><span class="n">${esc(p.nickname)}</span><span class="mono"><b>${p.score}</b>${opt.prog?` <span class="muted">· ${p.correct}/${p.answered}</span>`:''}</span>${opt.prog?`<span class="pr"><i style="width:${Math.round(p.q_pos/H.room.total_q*100)}%"></i></span>`:''}</div>`).join('')||'<p class="muted">Ancora nessun giocatore.</p>'}</div>`}
+function hostRender(){
+  const r=H.room,ov=$('hostOv');H.auto=false;H.confirm=false;
+  const top=`<div class="hostbar"><span class="eyebrow">Stanza <b class="mono" style="color:var(--yellow)">${pinFmt(r.pin)}</b> · ${r.mode==='live'?'Tutti insieme':'Ognuno al suo ritmo'} · <span id="hCount">0</span> giocatori</span><button class="btn sm ghost" id="hEnd">${r.status==='ended'?'Chiudi':'Termina la stanza'}</button></div>`;
+  let body='';
+  if(r.status==='lobby'){
+    body=`<div class="lobby"><div class="stack" style="gap:6px"><p class="muted">Dal telefono vai su</p><p class="joinurl mono">${esc(location.host+location.pathname)}</p><p class="muted">tocca <b>Entra con PIN</b> e scrivi</p><div class="pinbig">${pinFmt(r.pin)}</div><p class="muted">oppure inquadra il QR code</p></div><div class="qr" id="hQr"></div></div>
+    <div class="row" style="justify-content:space-between"><h2><span id="hNum">0</span> in stanza</h2><button class="btn y" id="hStart" disabled>Inizia la partita</button></div>
+    <div class="plist" id="hPlayers"></div><p class="muted" style="font-size:.9rem">Tocca due volte un nome per toglierlo dalla stanza.</p>`;
+  }else if(r.status==='question'){
+    body=`<div class="row" style="justify-content:space-between"><span class="eyebrow">Domanda ${r.current_q+1} di ${r.total_q}</span><span class="pill">Risposte <b id="hAns">0</b> / <b id="hTot">0</b></span></div>
+    <div class="hclock" id="hTimer"></div><div class="tbar"><i id="hBar"></i></div>
+    <div class="prob hprob">${probHTML(r.cur_n,r.cur_m)}</div>
+    <div class="row" style="justify-content:center"><button class="btn ghost" id="hReveal">Mostra subito la soluzione</button></div>`;
+  }else if(r.status==='reveal'){
+    const so=solve(r.cur_n,r.cur_m),st=H.stats||{right:0,wrong:0},tot=Math.max(1,H.players.length),none=Math.max(0,H.players.length-st.right-st.wrong),last=r.current_q+1>=r.total_q;
+    body=`<span class="eyebrow">Domanda ${r.current_q+1} di ${r.total_q} · soluzione</span>
+    <div class="prob hprob" style="margin:4px 0">${fmt(r.cur_n)} <span class="op">×</span> ${r.cur_m} = <span style="color:var(--ok)">${fmt(so.result)}</span></div>
+    <div class="grid g2"><div class="card stack"><h3>Passaggi di Trachtenberg, da destra</h3><div class="log" style="max-height:none;color:var(--chalk)">${so.steps.map((s,i)=>`<div>${i+1}. ${esc(stepText(s))}</div>`).join('')}</div></div>
+    <div class="card stack"><h3>Com'è andata</h3><div class="bars"><div class="b"><span>Giuste</span><i style="width:${st.right/tot*100}%;background:var(--ok)"></i><b class="mono">${st.right}</b></div><div class="b"><span>Sbagliate</span><i style="width:${st.wrong/tot*100}%;background:var(--coral)"></i><b class="mono">${st.wrong}</b></div><div class="b"><span>Senza risposta</span><i style="width:${none/tot*100}%;background:var(--muted)"></i><b class="mono">${none}</b></div></div>
+    <h3>Classifica</h3><div id="hTop"></div></div></div>
+    <div class="row" style="justify-content:center"><button class="btn y" id="hNext">${last?'Classifica finale':'Prossima domanda'}</button></div>`;
+  }else if(r.status==='running'){
+    body=`<div class="row" style="justify-content:space-between"><span class="eyebrow">${r.total_q} domande · ognuno al suo ritmo · <span id="hFin">0</span> hanno finito</span><span class="hclock sm" id="hTimer"></span></div><div id="hBoard"></div>`;
+  }else{
+    body=`<div style="text-align:center"><div class="eyebrow">Partita finita</div><h1>Classifica finale</h1></div><div class="podium" id="hPod"></div><div id="hBoard"></div>
+    <div class="row" style="justify-content:center"><button class="btn ghost" id="hCsv">Scarica i risultati (CSV)</button><button class="btn ghost" id="hCopy">Copia i risultati</button><button class="btn y" id="hNew">Nuova stanza</button></div>`;
+  }
+  ov.innerHTML=`<div class="hostwrap">${top}<div class="hostbody">${body}</div></div>`;
+  $('hEnd').onclick=()=>{if(r.status==='ended')return hostClose();if(!H.confirm){H.confirm=true;$('hEnd').textContent='Tocca ancora per terminare';$('hEnd').classList.add('red');return}hostAct('tl_host_end')};
+  if(r.status==='lobby'){if(!window.QRCode)$('hQr').style.display='none';else try{new QRCode($('hQr'),{text:joinUrl(r.pin),width:230,height:230,colorDark:'#10241f',colorLight:'#f3f1e7'})}catch(e){}$('hStart').onclick=()=>hostAct('tl_host_start')}
+  if(r.status==='question')$('hReveal').onclick=()=>{H.auto=true;hostAct('tl_host_reveal')};
+  if(r.status==='reveal'){$('hNext').onclick=()=>hostAct('tl_host_next');beep(520,.15)}
+  if(r.status==='question')beep(330,.12);
+  if(r.status==='ended'){$('hCsv').onclick=hostCsv;$('hCopy').onclick=hostCopy;$('hNew').onclick=()=>{ss('tl-host',null);hostClose()};sOk();setTimeout(sOk,250)}
+  hostRefresh();hostTick();
+}
+function hostRefresh(){
+  const r=H.room,P=H.players;if(!r||!$('hCount'))return;
+  $('hCount').textContent=P.length;
+  if(r.status==='lobby'){$('hNum').textContent=P.length;$('hStart').disabled=!P.length;
+    $('hPlayers').innerHTML=P.map(p=>`<button type="button" data-id="${p.id}" class="${H.kick===p.id?'kick':''}">${H.kick===p.id?'Togli '+esc(p.nickname)+'?':esc(p.nickname)}</button>`).join('');
+    $('hPlayers').querySelectorAll('button').forEach(b=>b.onclick=async()=>{const id=b.dataset.id;if(H.kick!==id){H.kick=id;hostRefresh();return}H.kick=null;try{await rpc('tl_host_kick',{p_room:r.id,p_token:H.token,p_player:id})}catch(e){toast(errMsg(e))}hostLoadPlayers()})}
+  if(r.status==='question'){$('hAns').textContent=P.filter(p=>p.last_q===r.current_q).length;$('hTot').textContent=P.length}
+  if(r.status==='reveal')$('hTop').innerHTML=lbHTML(P.slice(0,5));
+  if(r.status==='running'){$('hBoard').innerHTML=lbHTML(P,{prog:true});$('hFin').textContent=P.filter(p=>p.finished).length}
+  if(r.status==='ended'){const t=P.slice(0,3),cls=['p2','p1','p3'],ord=[1,0,2];
+    $('hPod').innerHTML=ord.map((k,i)=>t[k]?`<div class="${cls[i]}"><span class="pos">${k+1}°</span><b>${esc(t[k].nickname)}</b><span class="mono">${t[k].score} punti</span><span class="muted">${t[k].correct}/${t[k].answered} giuste</span></div>`:'<div style="visibility:hidden"></div>').join('');
+    $('hBoard').innerHTML=lbHTML(P,{prog:H.room.mode==='self'})}
+}
+function hostTick(){
+  const r=H.room;if(!r||!$('hTimer'))return;
+  if(r.status==='question'){const rem=new Date(r.q_started_at).getTime()+r.q_seconds*1000-srvNow();
+    $('hTimer').textContent=Math.max(0,Math.ceil(rem/1000));$('hBar').style.width=Math.max(0,rem/(r.q_seconds*1000)*100)+'%';
+    const all=H.players.length>0&&H.players.every(p=>p.last_q===r.current_q);
+    if((rem<=0||all)&&!H.auto){H.auto=true;setTimeout(()=>hostAct('tl_host_reveal'),all?700:0)}}
+  if(r.status==='running'){
+    if(r.ends_at){const rem=new Date(r.ends_at).getTime()-srvNow();$('hTimer').textContent=mmss(rem/1000);if(rem<=0&&!H.auto){H.auto=true;hostAct('tl_host_end')}}
+    else $('hTimer').textContent='';
+    if(H.players.length&&H.players.every(p=>p.finished)&&!H.auto){H.auto=true;setTimeout(()=>hostAct('tl_host_end'),1500)}}
+}
+function hostRows(){return [['Posizione','Nome','Punti','Giuste','Risposte']].concat(H.players.map((p,i)=>[i+1,p.nickname,p.score,p.correct,p.answered]))}
+function hostCsv(){const csv=hostRows().map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(';')).join('\n');
+  try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv'}));a.download='trachtenberg-stanza-'+H.room.pin+'.csv';document.body.appendChild(a);a.click();a.remove();toast('File scaricato')}catch(e){hostCopy()}}
+async function hostCopy(){const t=hostRows().map(r=>r.join('\t')).join('\n');try{await navigator.clipboard.writeText(t);toast('Risultati copiati: incollali in un foglio di calcolo')}catch(e){toast('Copia non riuscita')}}
+
+/* ---------- schermo dello studente ---------- */
+const G={};
+const prefPin=(()=>{try{return (new URLSearchParams(location.search).get('pin')||'').replace(/\D/g,'').slice(0,6)}catch(e){return ''}})();
+function giocaOpen(){if(G.pid){gRender(true);return}const saved=ss('tl-player');if(saved)return gResume(saved);gJoinForm()}
+function gReset(){clearInterval(G.poll);clearInterval(G.tick);if(G.chan&&sb)sb.removeChannel(G.chan);for(const k in G)delete G[k];ss('tl-player',null)}
+function gJoinForm(msg){
+  keyTarget=null;
+  $('gioca').innerHTML=`<div class="card stack"><div><div class="eyebrow">Stanza live</div><h2>Entra con il PIN</h2><p class="muted">Il PIN di 6 cifre è sulla LIM.</p></div>
+  <div class="field"><label for="jPin">PIN della stanza</label><input id="jPin" type="text" inputmode="numeric" maxlength="7" autocomplete="off" class="pininput" value="${prefPin}"></div>
+  <div class="field"><label for="jNick">Il tuo nome in classifica</label><input id="jNick" type="text" maxlength="16" autocomplete="off" placeholder="es. Giulia B."></div>
+  <button class="btn y" id="jGo">Entra nella stanza</button><p class="fb no" id="jMsg">${esc(msg||'')}</p></div>`;
+  const go=()=>gJoin();$('jGo').onclick=go;['jPin','jNick'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter')go()}));
+  (prefPin?$('jNick'):$('jPin')).focus();
+}
+async function gJoin(){
+  const pin=$('jPin').value.replace(/\D/g,''),nick=$('jNick').value.trim();
+  if(pin.length!==6)return $('jMsg').textContent='Il PIN ha 6 cifre.';
+  if(nick.length<2)return $('jMsg').textContent=ERRS.bad_nick;
+  $('jGo').disabled=true;$('jMsg').textContent='';
+  try{const r=await rpc('tl_join',{p_pin:pin,p_nick:nick});ss('tl-player',{pid:r.player_id,token:r.token});
+    Object.assign(G,{pid:r.player_id,token:r.token,nick:r.nickname});syncClock(r.room);await gRefresh();gSubscribe();sOk()}
+  catch(e){$('jMsg').textContent=errMsg(e);$('jGo').disabled=false}
+}
+async function gResume(saved){Object.assign(G,{pid:saved.pid,token:saved.token});
+  try{await gRefresh();gSubscribe()}catch(e){const m=errMsg(e);gReset();gJoinForm(m===ERRS.not_player?m:'')}}
+async function gRefresh(){
+  const st=await rpc('tl_player_state',{p_player:G.pid,p_token:G.token});
+  G.player=st.player;G.nick=st.player.nickname;G.room=st.room;G.rank=st.rank;G.np=st.players;G.q=st.question||null;syncClock(st.room);gRender();
+}
+function gSubscribe(){
+  G.chan=sbc().channel('p-'+G.pid).on('postgres_changes',{event:'UPDATE',schema:'public',table:'tl_rooms',filter:'id=eq.'+G.room.id},p=>{
+    const old=G.room;G.room=Object.assign({},G.room,p.new);if(old.status!==G.room.status||old.current_q!==G.room.current_q){G.res=null;gRefresh().catch(()=>{})}}).subscribe();
+  G.poll=setInterval(()=>gRefresh().catch(e=>{if(errMsg(e)===ERRS.not_player){gReset();gJoinForm(ERRS.not_player)}}),6000);
+  G.tick=setInterval(gTick,250);
+}
+function gKeyName(){const r=G.room,p=G.player;return [r.status,r.current_q,p.q_pos,p.last_q===r.current_q?'a':'',p.finished,G.res?1:0].join('|')}
+function gRender(force){
+  if(!G.room||location.hash!=='#gioca')return;
+  const k=gKeyName();
+  if(!force&&k===G.key){gLight();return}
+  G.key=k;
+  const r=G.room,p=G.player,el=$('gioca');keyTarget=null;
+  const head=`<div class="gtop"><span class="eyebrow">Stanza ${pinFmt(r.pin)} · ${esc(G.nick)}</span><span class="pill">Punti <b id="gScore">${p.score}</b></span></div>`;
+  let html='';
+  if(r.status==='lobby')html=`<div class="card stack">${head}<h2>Ci sei, ${esc(G.nick)}!</h2><p>Aspetta che il prof avvii la partita. Intanto ripassa le regole in gara: ${(r.settings.techs||[]).map(m=>'× '+m).join(', ')}.</p><p class="muted"><span id="gN">${G.np}</span> in stanza</p><button class="btn sm ghost" id="gLeave" style="align-self:flex-start">Esci dalla stanza</button></div>`;
+  else if(r.status==='question'&&p.last_q!==r.current_q)html=`<div class="card">${head}<div class="hud" style="margin-top:8px"><span class="eyebrow">Domanda ${r.current_q+1} di ${r.total_q}</span><span class="big mono" id="gTimer"></span></div><div class="tbar"><i id="gBar"></i></div><div class="prob">${probHTML(r.cur_n,r.cur_m)}</div><div class="ans" id="gAns"></div><div class="fb" id="gFb"></div><div id="gKp"></div></div>`;
+  else if(r.status==='question'||r.status==='reveal'){
+    const mine=p.last_q===r.current_q,res=G.res||{correct:p.last_correct,points:p.last_points};
+    const exp=fmt(r.cur_n*r.cur_m);
+    html=`<div class="card stack" style="text-align:center">${head}${r.status==='question'?`<h2>${res.correct?'Giusto!':'Risposta inviata'}</h2><p class="hclock" style="color:${res.correct?'var(--ok)':'var(--coral)'}">${res.correct?'+'+res.points:'0'}</p><p class="muted">Aspetta la soluzione sulla LIM…</p>`
+      :`<span class="eyebrow">Soluzione</span><p class="prob" style="margin:4px 0">${fmt(r.cur_n)} <span class="op">×</span> ${r.cur_m} = <span style="color:var(--ok)">${exp}</span></p><h2>${!mine?'Nessuna risposta':res.correct?'Giusto! +'+res.points:'Sbagliato'}</h2><p style="font-size:1.2rem">Sei <b class="mono" id="gRank">${G.rank}°</b> su ${G.np}</p><p class="muted">Aspetta la prossima domanda.</p>`}</div>`;
+  }
+  else if(r.status==='running'&&!p.finished&&G.q)html=`<div class="card">${head}<div class="hud" style="margin-top:8px"><span class="eyebrow">Domanda ${p.q_pos+1} di ${r.total_q}</span><span class="big mono" id="gTimer"></span></div><div class="tbar"><i id="gBar" style="width:${p.q_pos/r.total_q*100}%"></i></div><div class="prob">${probHTML(G.q.n,G.q.m)}</div><div class="ans" id="gAns"></div><div class="fb ${G.res?(G.res.correct?'ok':'no'):''}" id="gFb">${G.res?(G.res.correct?'Giusto! +'+G.res.points:'No: era '+fmt(G.res.expected)):''}</div><div id="gKp"></div></div>`;
+  else if(r.status==='running')html=`<div class="card stack" style="text-align:center">${head}<h2>Hai finito!</h2><p class="hclock">${p.score}</p><p>Giuste <b>${p.correct}</b> su ${p.answered} · per ora sei <b class="mono" id="gRank">${G.rank}°</b> su ${G.np}</p><p class="muted">Aspetta che finiscano anche gli altri.</p></div>`;
+  else if(r.status==='ended')html=`<div class="card stack" style="text-align:center">${head}<div class="eyebrow">Partita finita</div><h1>${G.rank===1?'Hai vinto!':G.rank+'° posto'}</h1><p class="hclock">${p.score} punti</p><p>Giuste <b>${p.correct}</b> su ${p.answered} · ${G.np} giocatori</p><div class="row" style="justify-content:center"><button class="btn y" id="gLeave">Esci</button><a class="btn ghost" href="#solo">Allenati in Sfida solo</a></div></div>`;
+  el.innerHTML=html;
+  if($('gLeave'))$('gLeave').onclick=()=>{gReset();gJoinForm()};
+  if($('gKp')){G.ans=new Answer($('gAns'),true);keypad($('gKp'),gKey);keyTarget=gKey}
+  if(r.status==='ended'&&G.rank===1){sOk();setTimeout(sOk,250)}
+  gTick();
+}
+function gLight(){if($('gScore'))$('gScore').textContent=G.player.score;if($('gRank'))$('gRank').textContent=G.rank+'°';if($('gN'))$('gN').textContent=G.np}
+function gTick(){const r=G.room;if(!r||!$('gTimer'))return;
+  if(r.status==='question'){const rem=new Date(r.q_started_at).getTime()+r.q_seconds*1000-srvNow();$('gTimer').textContent=Math.max(0,Math.ceil(rem/1000));$('gBar').style.width=Math.max(0,rem/(r.q_seconds*1000)*100)+'%';
+    if(rem<-2000&&$('gKp')){$('gKp').innerHTML='';keyTarget=null;$('gFb').className='fb no';$('gFb').textContent='Tempo scaduto'}}
+  else if(r.status==='running'&&r.ends_at){$('gTimer').textContent=mmss((new Date(r.ends_at).getTime()-srvNow())/1000)}}
+async function gKey(k){
+  if(!G.ans||G.sending)return;if(k==='del')return G.ans.del();if(k!=='ok')return G.ans.push(k);if(!G.ans.v)return;
+  const r=G.room,qi=r.mode==='live'?r.current_q:G.player.q_pos;G.sending=true;
+  try{const res=await rpc('tl_submit',{p_player:G.pid,p_token:G.token,p_q:qi,p_value:G.ans.v});
+    G.res=res;Object.assign(G.player,{score:res.score,streak:res.streak,q_pos:res.q_pos,finished:res.finished,last_correct:res.correct,last_points:res.points});
+    if(r.mode==='live')G.player.last_q=qi;else G.q=res.next||null;
+    res.correct?sOk():sNo();gRender(true);
+  }catch(e){$('gFb').className='fb no';$('gFb').textContent=errMsg(e);gRefresh().catch(()=>{})}
+  finally{G.sending=false}
+}
+
+/* ================= POPUP PAROLE ================= */
+let glossPrevKey=null;
+function glossOpen(){glossPrevKey=keyTarget;keyTarget=null;$('glossModal').classList.add('on');$('glossClose').focus()}
+function glossShut(){$('glossModal').classList.remove('on');keyTarget=glossPrevKey;$('glossBtn').focus()}
+$('glossBtn').onclick=glossOpen;$('glossClose').onclick=glossShut;
+$('glossModal').addEventListener('click',e=>{if(e.target.id==='glossModal')glossShut()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('glossModal').classList.contains('on'))glossShut()});
+
+/* ================= AVVIO ================= */
+if(prefPin&&!location.hash)history.replaceState(null,'',location.pathname+location.search+'#gioca');
+renderXP();renderSnd();route();
+</script>
+</body>
+</html>
