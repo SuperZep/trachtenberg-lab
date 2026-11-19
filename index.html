@@ -302,6 +302,10 @@ input[type=text],input[type=number]{background:#132824;border:1px solid var(--li
 .gtop{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .iconbtn.snd{display:inline-grid;place-items:center;padding:6px 8px;line-height:0}
 .iconbtn.snd.mute{color:var(--muted)}
+.iconbtn.onl{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono);font-weight:800}
+.iconbtn.onl .dot{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(134,224,143,.22)}
+#onlineList span{border:1px solid var(--line);background:var(--panel2);border-radius:99px;padding:6px 13px;font-weight:700}
+#onlineList span.me{background:var(--yellow);color:#1b1b1b;border-color:var(--yellow)}
 .iconbtn.acc{font-weight:700;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .iconbtn.acc.on{background:var(--yellow);color:#1b1b1b !important;border-color:var(--yellow)}
 .heroright{display:flex;flex-direction:column;gap:10px;min-width:0}
@@ -344,7 +348,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
       <a href="#classifica" data-v="classifica">Classifica</a>
     </nav>
     <div class="xpchip"><span id="lvlname">Apprendista</span><span class="xpbar"><i id="xpfill" style="width:0%"></i></span><span class="mono" id="xptxt">0 XP</span>
-      <a class="iconbtn acc" id="accBtn" href="#account" style="text-decoration:none;color:inherit">Accedi</a><button class="iconbtn snd" id="sndbtn" aria-pressed="true" title="Suoni attivi" aria-label="Suoni attivi: tocca per disattivarli"></button></div>
+      <button class="iconbtn onl" id="onlineBtn" type="button" aria-haspopup="dialog" title="Persone collegate ora" style="display:none"><i class="dot" aria-hidden="true"></i><span id="onlineN">0</span></button><a class="iconbtn acc" id="accBtn" href="#account" style="text-decoration:none;color:inherit">Accedi</a><button class="iconbtn snd" id="sndbtn" aria-pressed="true" title="Suoni attivi" aria-label="Suoni attivi: tocca per disattivarli"></button></div>
   </div>
 </header>
 
@@ -539,6 +543,13 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
     <div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 id="topTitle"><svg width="26" height="22" viewBox="0 0 26 22" aria-hidden="true"><rect x="9" y="2" width="8" height="20" rx="1.5" fill="#ffd23f"/><rect x="0" y="8" width="8" height="14" rx="1.5" fill="#c9d3d0"/><rect x="18" y="12" width="8" height="10" rx="1.5" fill="#d89a62"/></svg> Classifica generale · Top 10</h3><button class="iconbtn" id="topClose" aria-label="Chiudi">Chiudi</button></div>
     <div id="topList"></div>
     <div class="row" style="justify-content:space-between;margin-top:12px"><span class="muted" id="topMe" style="font-size:.9rem"></span><a href="#classifica" id="topAll" style="color:var(--yellow);font-weight:700">Classifica completa →</a></div>
+  </div>
+</div>
+<div class="modal" id="onlineModal" role="dialog" aria-modal="true" aria-labelledby="onlineTitle">
+  <div class="modal-box">
+    <div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 id="onlineTitle">Collegati ora</h3><button class="iconbtn" id="onlineClose" aria-label="Chiudi">Chiudi</button></div>
+    <div id="onlineList" class="plist"></div>
+    <p class="muted" style="font-size:.88rem;margin-top:12px">Contano solo le persone che hanno fatto l'accesso e hanno il sito aperto.</p>
   </div>
 </div>
 <div class="modal" id="glossModal" role="dialog" aria-modal="true" aria-labelledby="glossTitle">
@@ -1358,7 +1369,23 @@ async function gKey(k){
 /* ================= ACCOUNT E CLASSIFICHE ================= */
 let AUTH=null;
 try{AUTH=JSON.parse(localStorage.getItem('tl-auth')||'null')}catch(e){}
-function setAuth(a){AUTH=a;try{a?localStorage.setItem('tl-auth',JSON.stringify(a)):localStorage.removeItem('tl-auth')}catch(e){}renderAccBtn()}
+function setAuth(a){AUTH=a;try{a?localStorage.setItem('tl-auth',JSON.stringify(a)):localStorage.removeItem('tl-auth')}catch(e){}renderAccBtn();onlineTrack()}
+/* ---------- persone collegate ora (presence) ---------- */
+const ONL={ch:null,names:[],ready:false};
+function onlineInit(){try{const c=sbc();
+  ONL.ch=c.channel('tl-online',{config:{presence:{key:'tab-'+Math.random().toString(36).slice(2,10)}}});
+  ONL.ch.on('presence',{event:'sync'},()=>{const st=ONL.ch.presenceState();
+    ONL.names=[...new Set(Object.values(st).flat().map(m=>m&&m.u).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'it',{sensitivity:'base'}));renderOnline()})
+   .subscribe(st=>{if(st==='SUBSCRIBED'){ONL.ready=true;$('onlineBtn').style.display='';onlineTrack();renderOnline()}});
+ }catch(e){}}
+function onlineTrack(){if(!ONL.ch||!ONL.ready)return;try{AUTH?ONL.ch.track({u:AUTH.username}):ONL.ch.untrack()}catch(e){}}
+function renderOnline(){const n=ONL.names.length;$('onlineN').textContent=n;$('onlineBtn').setAttribute('aria-label',`${n} ${n===1?'persona collegata':'persone collegate'} ora: tocca per vedere chi`);
+  if($('onlineModal').classList.contains('on'))onlineList()}
+function onlineList(){const n=ONL.names.length;$('onlineTitle').textContent=`Collegati ora · ${n}`;
+  $('onlineList').innerHTML=n?ONL.names.map(u=>`<span class="${AUTH&&u===AUTH.username?'me':''}">${esc(u)}${AUTH&&u===AUTH.username?' (tu)':''}</span>`).join(''):'<p class="muted">In questo momento nessuno è collegato con un account.</p>'}
+let onlPrevKey=null;
+function onlineOpen(){onlPrevKey=keyTarget;keyTarget=null;onlineList();$('onlineModal').classList.add('on');$('onlineClose').focus()}
+function onlineShut(){$('onlineModal').classList.remove('on');keyTarget=onlPrevKey;$('onlineBtn').focus()}
 function renderAccBtn(){const b=$('accBtn');if(!b)return;b.textContent=AUTH?AUTH.username:'Accedi';b.classList.toggle('on',!!AUTH)}
 Object.assign(ERRS,{bad_username:'Il nome utente deve avere da 3 a 16 caratteri: lettere, numeri, punto, trattino o trattino basso.',bad_password:'La password deve avere almeno 6 caratteri.',username_taken:'Questo nome utente esiste già: scegline un altro.',bad_login:'Nome utente o password sbagliati.',locked:'Troppi tentativi sbagliati: riprova tra 5 minuti.',not_logged:'Sessione scaduta: accedi di nuovo.'});
 const dLabel=d=>d==='escape'?'Escape room':tLabel(pT(d));
@@ -1439,6 +1466,8 @@ async function topOpen(){
   }catch(e){$('topList').innerHTML=`<p class="fb no">${esc(errMsg(e))}</p>`}
 }
 function topShut(){$('topModal').classList.remove('on');keyTarget=topPrevKey}
+$('onlineBtn').onclick=onlineOpen;$('onlineClose').onclick=onlineShut;$('onlineModal').addEventListener('click',e=>{if(e.target.id==='onlineModal')onlineShut()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('onlineModal').classList.contains('on'))onlineShut()});
 $('podBtn').onclick=topOpen;$('topClose').onclick=()=>{topShut();$('podBtn').focus()};$('topAll').onclick=()=>{LB.d='all';topShut()};
 $('topModal').addEventListener('click',e=>{if(e.target.id==='topModal')topShut()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('topModal').classList.contains('on'))topShut()});
@@ -1453,7 +1482,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('glossModal').cla
 
 /* ================= AVVIO ================= */
 if(prefPin&&!location.hash)history.replaceState(null,'',location.pathname+location.search+'#gioca');
-renderXP();renderSnd();renderAccBtn();route();
+renderXP();renderSnd();renderAccBtn();route();onlineInit();
 </script>
 </body>
 </html>
