@@ -302,6 +302,11 @@ input[type=text],input[type=number]{background:#132824;border:1px solid var(--li
 .gtop{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .iconbtn.acc{font-weight:700;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .iconbtn.acc.on{background:var(--yellow);color:#1b1b1b !important;border-color:var(--yellow)}
+.podbtn{display:inline-flex;align-items:center;gap:10px;margin-top:14px;background:var(--panel2);border:1px solid rgba(255,210,63,.55);border-radius:12px;padding:9px 14px;font-weight:700;color:var(--chalk)}
+.podbtn:hover{border-color:var(--yellow);transform:translateY(-1px)}
+#topModal h3{display:flex;align-items:center;gap:8px}
+#topList .lb .r{grid-template-columns:40px 1fr auto}
+#topList .lb .r .pos{display:flex;justify-content:center}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--chalk);color:var(--bg);padding:10px 18px;border-radius:12px;font-weight:700;z-index:80;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.on{opacity:1}
 footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
@@ -342,6 +347,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
         <a class="btn ghost" href="#gioca">Entra con PIN</a>
         <a class="btn ghost" href="#escape">Vai all'escape room</a>
       </div>
+      <button class="podbtn" id="podBtn" type="button" aria-haspopup="dialog"><svg width="26" height="22" viewBox="0 0 26 22" aria-hidden="true"><rect x="9" y="2" width="8" height="20" rx="1.5" fill="#ffd23f"/><rect x="0" y="8" width="8" height="14" rx="1.5" fill="#c9d3d0"/><rect x="18" y="12" width="8" height="10" rx="1.5" fill="#d89a62"/></svg><span>Classifica: i primi 10</span></button>
     </div>
     <div class="board" aria-label="Esempio: 4232 per 11">
       <div class="eyebrow" style="color:#cfe3d9">Esempio alla lavagna</div>
@@ -510,6 +516,13 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
 <div class="overlay" id="duelOv"></div>
 <div class="overlay" id="hostOv"></div>
 <div class="toast" id="toast"></div>
+<div class="modal" id="topModal" role="dialog" aria-modal="true" aria-labelledby="topTitle">
+  <div class="modal-box">
+    <div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 id="topTitle"><svg width="26" height="22" viewBox="0 0 26 22" aria-hidden="true"><rect x="9" y="2" width="8" height="20" rx="1.5" fill="#ffd23f"/><rect x="0" y="8" width="8" height="14" rx="1.5" fill="#c9d3d0"/><rect x="18" y="12" width="8" height="10" rx="1.5" fill="#d89a62"/></svg> Classifica generale · Top 10</h3><button class="iconbtn" id="topClose" aria-label="Chiudi">Chiudi</button></div>
+    <div id="topList"></div>
+    <div class="row" style="justify-content:space-between;margin-top:12px"><span class="muted" id="topMe" style="font-size:.9rem"></span><a href="#classifica" id="topAll" style="color:var(--yellow);font-weight:700">Classifica completa →</a></div>
+  </div>
+</div>
 <div class="modal" id="glossModal" role="dialog" aria-modal="true" aria-labelledby="glossTitle">
   <div class="modal-box">
     <div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 id="glossTitle">Le parole del metodo</h3><button class="iconbtn" id="glossClose" aria-label="Chiudi">Chiudi</button></div>
@@ -1339,6 +1352,24 @@ async function leaderboardRender(){
       :r.me?(top.some(x=>x.me)?'':`<div class="lb"><div class="r fin"><span class="pos">${r.me.rank}</span><span class="n">${esc(r.me.username)} <span class="muted">(tu)</span></span><span class="mono"><b>${r.me.points}</b></span></div></div>`):'<p class="muted">Non hai ancora punti in questa classifica.</p>';
   }catch(e){$('lbList').innerHTML=`<p class="fb no">${esc(errMsg(e))}</p>`}
 }
+
+/* ================= TOP 10 IN HOME ================= */
+function medal(n){const c={1:'#ffd23f',2:'#c9d3d0',3:'#d89a62'}[n];if(!c)return `<span class="pos">${n}</span>`;
+  return `<span class="pos" aria-label="${n}° posto"><svg width="28" height="32" viewBox="0 0 28 32" aria-hidden="true"><path d="M7 0h6l3 11h-6z" fill="#62dbe3"/><path d="M21 0h-6l-3 11h6z" fill="#ff6b5b"/><circle cx="14" cy="21" r="10" fill="${c}" stroke="rgba(0,0,0,.3)" stroke-width="2"/><text x="14" y="25.5" text-anchor="middle" font-size="12" font-weight="800" fill="#1b1b1b" font-family="JetBrains Mono, monospace">${n}</text></svg></span>`}
+let topPrevKey=null;
+async function topOpen(){
+  topPrevKey=keyTarget;keyTarget=null;$('topModal').classList.add('on');$('topClose').focus();
+  $('topList').innerHTML='<p class="muted">Carico la classifica…</p>';$('topMe').textContent='';
+  try{const r=await rpc('tl_leaderboard',{p_disc:null,p_token:AUTH?AUTH.token:null});const top=(r.top||[]).slice(0,10);
+    $('topList').innerHTML=top.length?`<div class="lb">${top.map(x=>`<div class="r ${x.me?'fin':''}">${medal(x.rank)}<span class="n">${esc(x.username)}${x.me?' <span class="muted">(tu)</span>':''}</span><span class="mono"><b>${x.points}</b></span></div>`).join('')}</div>`:'<p class="muted">Nessuno ha ancora punti. Il primo posto è libero!</p>';
+    $('topMe').innerHTML=!AUTH?'<a href="#account" style="color:var(--yellow)">Accedi</a> per entrare in classifica.':r.me?(top.some(x=>x.me)?'':`Tu sei ${r.me.rank}° con ${r.me.points} punti.`):'Non hai ancora punti.';
+    $('topMe').querySelectorAll('a').forEach(a=>a.onclick=topShut);
+  }catch(e){$('topList').innerHTML=`<p class="fb no">${esc(errMsg(e))}</p>`}
+}
+function topShut(){$('topModal').classList.remove('on');keyTarget=topPrevKey}
+$('podBtn').onclick=topOpen;$('topClose').onclick=()=>{topShut();$('podBtn').focus()};$('topAll').onclick=()=>{LB.d='all';topShut()};
+$('topModal').addEventListener('click',e=>{if(e.target.id==='topModal')topShut()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('topModal').classList.contains('on'))topShut()});
 
 /* ================= POPUP PAROLE ================= */
 let glossPrevKey=null;
