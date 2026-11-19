@@ -308,6 +308,17 @@ input[type=text],input[type=number]{background:#132824;border:1px solid var(--li
 #topModal h3{display:flex;align-items:center;gap:8px}
 #topList .lb .r{grid-template-columns:40px 1fr auto}
 #topList .lb .r .pos{display:flex;justify-content:center}
+.coach{position:fixed;left:50%;top:14px;transform:translate(-50%,-20px);opacity:0;z-index:96;width:max-content;max-width:min(92vw,440px);background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--ok);border-radius:14px;padding:12px 16px;box-shadow:0 18px 50px rgba(0,0,0,.45);display:flex;flex-direction:column;gap:2px;transition:opacity .25s,transform .25s;pointer-events:none}
+.coach.on{opacity:1;transform:translate(-50%,0)}
+.coach b{font-family:var(--f-display);font-size:1.15rem;line-height:1.2}
+.coach span{color:var(--muted);font-size:.95rem}
+.coach.gold{border-left-color:var(--yellow);background:linear-gradient(120deg,rgba(255,210,63,.2),var(--panel) 65%)}
+.coach.gold b{color:var(--yellow)}
+.coach.push{border-left-color:var(--cyan)}
+.coach.push b{color:var(--cyan)}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:95;display:none}
+.coachline{border-left:4px solid var(--yellow);padding:6px 12px;background:rgba(255,210,63,.08);border-radius:0 10px 10px 0}
+.coachline b{color:var(--yellow)}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--chalk);color:var(--bg);padding:10px 18px;border-radius:12px;font-weight:700;z-index:80;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.on{opacity:1}
 footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
@@ -519,6 +530,8 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
 <div class="overlay" id="duelOv"></div>
 <div class="overlay" id="hostOv"></div>
 <div class="toast" id="toast"></div>
+<div class="coach" id="coach" role="status" aria-live="polite"></div>
+<canvas id="confetti" aria-hidden="true"></canvas>
 <div class="modal" id="topModal" role="dialog" aria-modal="true" aria-labelledby="topTitle">
   <div class="modal-box">
     <div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 id="topTitle"><svg width="26" height="22" viewBox="0 0 26 22" aria-hidden="true"><rect x="9" y="2" width="8" height="20" rx="1.5" fill="#ffd23f"/><rect x="0" y="8" width="8" height="14" rx="1.5" fill="#c9d3d0"/><rect x="18" y="12" width="8" height="10" rx="1.5" fill="#d89a62"/></svg> Classifica generale · Top 10</h3><button class="iconbtn" id="topClose" aria-label="Chiudi">Chiudi</button></div>
@@ -670,6 +683,25 @@ function genNum(rng,minD,maxD){const d=minD+Math.floor(rng()*(maxD-minD+1));let 
 function pick(rng,a){return a[Math.floor(rng()*a.length)]}
 function shuffle(rng,a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>e.classList.remove('on'),1800)}
+/* ---------- coach: incoraggiamenti e congratulazioni ---------- */
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const CQ=[];let cBusy=false;
+function cheer(title,sub,kind='ok',boom=false){if(CQ.length>3)CQ.shift();CQ.push({title,sub,kind,boom});if(!cBusy)cNext()}
+function cNext(){const c=CQ.shift();if(!c){cBusy=false;return}cBusy=true;const el=$('coach');el.className='coach '+c.kind;el.innerHTML=`<b>${esc(c.title)}</b>${c.sub?`<span>${esc(c.sub)}</span>`:''}`;void el.offsetWidth;el.classList.add('on');
+  if(c.boom)confetti();if(c.kind==='gold'){beep(784,.12);setTimeout(()=>beep(1046,.2),110)}
+  setTimeout(()=>{el.classList.remove('on');setTimeout(cNext,300)},c.kind==='gold'?3300:2400)}
+function confetti(){try{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return}catch(e){}
+  const c=$('confetti'),x=c.getContext('2d');if(!x)return;c.width=innerWidth;c.height=innerHeight;c.style.display='block';
+  const cols=['#ffd23f','#62dbe3','#ff6b5b','#86e08f','#7aa7ff','#f3f1e7'];
+  const ps=Array.from({length:150},()=>({x:innerWidth/2+(Math.random()-.5)*innerWidth*.5,y:innerHeight*.22,vx:(Math.random()-.5)*13,vy:-Math.random()*11-4,s:5+Math.random()*6,r:Math.random()*6,vr:(Math.random()-.5)*.35,c:rnd(cols)}));
+  const t0=performance.now();let last=t0;
+  (function f(now){const dt=Math.min(32,now-last)/16;last=now;x.clearRect(0,0,c.width,c.height);
+    for(const p of ps){p.vy+=.32*dt;p.vx*=.995;p.x+=p.vx*dt;p.y+=p.vy*dt;p.r+=p.vr*dt;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/3,p.s,p.s*.66);x.restore()}
+    if(now-t0<2400)requestAnimationFrame(f);else{x.clearRect(0,0,c.width,c.height);c.style.display='none'}})(t0)}
+function dayKey(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
+function dayTick(){const d=new Date(),k=dayKey(d);if(P.day===k)return;const yk=dayKey(new Date(d.getTime()-864e5));
+  P.dayN=P.day===yk?(P.dayN||1)+1:1;P.day=k;save();
+  if(P.dayN>=2)cheer(`${P.dayN} giorni di fila!`,rnd(['La costanza fa la differenza.','Allenarti ogni giorno ti rende velocissimo.','Continua così: domani ci rivediamo!']),'gold',P.dayN%5===0)}
 function shake(el){el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake')}
 function flashOk(el){el.classList.remove('flash-ok');void el.offsetWidth;el.classList.add('flash-ok')}
 const probHTML=(n,m)=>`<span class="z">${'0'.repeat(SINGLE.includes(+m)?1:String(m).length)}</span>${n} <span class="op">×</span> ${m}`;
@@ -810,8 +842,16 @@ function learnAccept(auto){
   $('log').insertAdjacentHTML('afterbegin',`<div>${esc(stepText(cur))}</div>`);
   L.k++;L.err=0;
   if(L.k>=L.sol.steps.length){L.done=true;
-    if(!auto){st(L.m).guided++;addXP(L.errTot===0?15:8);sOk();setTimeout(sOk,180);award('tl_record_lesson',{p_t:String(L.m),p_n:L.n,p_m:L.mult,p_errors:L.errTot},tLabel(L.m))}}
+    if(!auto){const s0=stars(L.m);st(L.m).guided++;learnCheer(s0);addXP(L.errTot===0?15:8);sOk();setTimeout(sOk,180);award('tl_record_lesson',{p_t:String(L.m),p_n:L.n,p_m:L.mult,p_errors:L.errTot},tLabel(L.m))}}
   learnRender();
+}
+function learnCheer(s0){
+  if(stars(L.m)>s0){L.perfect=0;cheer(`Prima stella su ${tLabel(L.m)}!`,'Hai completato la tua prima lezione su questa regola.','gold',true)}
+  else if(L.errTot===0){L.perfect=(L.perfect||0)+1;
+    if(L.perfect%3===0)cheer('Tre esercizi perfetti di fila!','Sei pronto per la Sfida solo: mettiti alla prova.','gold',true);
+    else cheer(rnd(['Perfetto, zero errori!','Impeccabile!','Precisione da campione!']),rnd(['Ancora uno e diventa automatico.','Il metodo sta entrando in testa.']),'ok')}
+  else{L.perfect=0;cheer('Fatto!',rnd(['Gli errori fanno parte dell\'allenamento.','Rifallo: il prossimo sarà senza errori.','Ogni errore ti insegna qualcosa.']),'push')}
+  dayTick();
 }
 $('mGuided').onclick=()=>{L.mode='guided';learnStart(L.n)};
 $('mWatch').onclick=()=>{L.mode='watch';learnStart(L.n)};
@@ -846,14 +886,14 @@ function soloSetupRender(){
 }
 function soloBestTxt(){const b=P.best[bestKey()];$('soloBest').textContent=b?`Record (${DIFFLBL[SS.diff]}, ${SS.dur} s): ${b} punti`:'Nessun record ancora per questa combinazione'}
 $('soloStart').onclick=()=>{
-  Object.assign(S,{running:true,rng:makeRng($('soloCode').value),code:$('soloCode').value.trim(),t:SS.dur,score:0,streak:0,ok:0,no:0,log:[],errs:[],last:performance.now()});
+  Object.assign(S,{warned:false,wrongRun:0,stars0:Object.fromEntries(SS.techs.map(t=>[t,stars(t)])),running:true,rng:makeRng($('soloCode').value),code:$('soloCode').value.trim(),t:SS.dur,score:0,streak:0,ok:0,no:0,log:[],errs:[],last:performance.now()});
   $('soloSetup').style.display='none';$('soloGame').style.display='';$('soloEnd').style.display='none';
   S.ans=new Answer($('sAns'),$('soloRtl').checked);
   keypad($('soloKp'),soloKey);keyTarget=soloKey;
   soloNext();S.int=setInterval(soloTick,200);soloHud();
 };
 function soloNext(){const p=genProblem(S.rng,pick(S.rng,SS.techs),SS.diff);S.tech=p.t;S.m=p.m;S.n=p.n;S.t0=performance.now();$('sProb').innerHTML=probHTML(S.n,S.m);S.ans.clear()}
-function soloTick(){const now=performance.now();S.t-=(now-S.last)/1000;S.last=now;if(S.t<=0){S.t=0;soloEnd(false)}soloHud()}
+function soloTick(){const now=performance.now();S.t-=(now-S.last)/1000;S.last=now;if(!S.warned&&S.t<=10&&S.t>0){S.warned=true;cheer('Ultimi 10 secondi!',rnd(['Dai tutto!','Volata finale!','Ogni risposta conta!']),'push')}if(S.t<=0){S.t=0;soloEnd(false)}soloHud()}
 function mult(){return 1+Math.min(S.streak,5)*.2}
 function soloHud(){$('sTime').textContent=Math.ceil(S.t);$('sScore').textContent=S.score;$('sCombo').textContent='×'+mult().toFixed(1);$('sBar').style.width=(S.t/SS.dur*100)+'%';$('sBar').style.background=S.t<10?'var(--coral)':''}
 function soloKey(k){
@@ -863,10 +903,14 @@ function soloKey(k){
   if(!S.ans.v)return;
   const right=String(S.n*S.m);S.log.push({n:S.n,m:S.m,t:String(S.tech),v:S.ans.val()});
   if(S.ans.val()===right){
-    S.streak++;const pts=Math.round(String(S.n).length*String(S.m).length*10*mult());S.score+=pts;S.ok++;st(S.tech).correct++;
+    S.streak++;S.wrongRun=0;const pts=Math.round(String(S.n).length*String(S.m).length*10*mult());S.score+=pts;S.ok++;st(S.tech).correct++;
+    if(S.stars0&&stars(S.tech)>(S.stars0[S.tech]||0)){S.stars0[S.tech]=stars(S.tech);cheer(`Nuova stella su ${tLabel(S.tech)}!`,`Ora hai ${stars(S.tech)===1?'una stella':stars(S.tech)+' stelle'} su 3. Grande lavoro!`,'gold',true)}
+    else if(S.streak===3)cheer(rnd(['Tre di fila!','Tris perfetto!','Stai carburando!']),'Il moltiplicatore di punti sale.','ok');
+    else if(S.streak===5)cheer(rnd(['Cinque di fila!','Mano calda!','Sei inarrestabile!']),'Moltiplicatore al massimo: ×2.0','gold');
+    else if(S.streak>=10&&S.streak%5===0)cheer(`${S.streak} di fila!`,rnd(['Questo è talento.','Sei una macchina da calcolo!','Trachtenberg sarebbe fiero di te.']),'gold',S.streak===10);
     $('sFb').className='fb ok';$('sFb').textContent=`Giusto! +${pts}`;sOk();flashOk($('sAns'));soloNext();
   }else{
-    S.streak=0;S.no++;S.errs.push({n:S.n,m:S.m,t:S.tech,given:S.ans.v});
+    if(S.streak>=5)cheer('Peccato!',`Eri a ${S.streak} di fila: ripartiamo subito.`,'push');S.streak=0;S.no++;S.wrongRun=(S.wrongRun||0)+1;if(S.wrongRun===3)cheer('Respira un attimo',rnd(['Precisione prima della velocità: una cifra alla volta.','Rallenta: con calma i punti arrivano.']),'push');S.errs.push({n:S.n,m:S.m,t:S.tech,given:S.ans.v});
     $('sFb').className='fb no';$('sFb').textContent=`No: ${fmt(S.n)} × ${S.m} = ${fmt(right)}`;sNo();shake($('sAns'));soloNext();
   }
   soloHud();
@@ -876,13 +920,23 @@ $('sStop').onclick=()=>soloEnd(false);
 function soloEnd(silent){
   clearInterval(S.int);if(!S.running)return;S.running=false;keyTarget=null;
   if(silent)return;
-  const k=bestKey(),rec=!P.best[k]||S.score>P.best[k];if(rec&&S.score>0)P.best[k]=S.score;
+  const k=bestKey(),prevBest=P.best[k],rec=!P.best[k]||S.score>P.best[k];if(rec&&S.score>0)P.best[k]=S.score;
+  P.last=P.last||{};const prevLast=P.last[k];P.last[k]=S.score;
+  const accN=S.ok+S.errs.length?Math.round(S.ok/(S.ok+S.errs.length)*100):0;let cm;
+  if(S.score>0&&rec&&prevBest)cm=['Nuovo record personale!',`${S.score} punti: ${S.score-prevBest} in più del tuo record precedente.`,'gold',true];
+  else if(S.score>0&&rec)cm=['Primo record fissato!','Adesso la sfida è batterlo.','gold',false];
+  else if(prevLast!=null&&S.score>prevLast)cm=['Stai migliorando!',`+${S.score-prevLast} punti rispetto alla partita precedente.`,'ok',false];
+  else if(accN===100&&S.ok>=5)cm=['Precisione perfetta!','Nessun errore: ora puoi spingere sulla velocità.','gold',false];
+  else if(S.ok===0)cm=['Non mollare!','Ripassa la regola in Impara e riprova: il primo passo è il più difficile.','push',false];
+  else cm=['Buona partita!',rnd(['Ogni partita ti allena il cervello.','Il prossimo record è dietro l\'angolo.','La velocità arriva con la pratica: riprova!']),'push',false];
+  cheer(...cm);if(S.ok>0)dayTick();
   const xp=S.ok*2;save();if(xp)addXP(xp);
   $('soloGame').style.display='none';const e=$('soloEnd');e.style.display='';
   const acc=S.ok+S.errs.length?Math.round(S.ok/(S.ok+S.errs.length)*100):0;
   e.innerHTML=`<div><div class="eyebrow">Tempo scaduto</div><h2>${S.score} punti${rec&&S.score>0?' · nuovo record!':''}</h2></div>
   <div class="grid g4"><div class="stat"><span class="muted">Giuste</span><b>${S.ok}</b></div><div class="stat"><span class="muted">Sbagliate o passate</span><b>${S.errs.length}</b></div><div class="stat"><span class="muted">Precisione</span><b>${acc}%</b></div><div class="stat"><span class="muted">XP guadagnati</span><b>+${xp}</b></div></div>
   <p class="muted" id="soloLb">${AUTH?'Salvo i punti in classifica…':'<a href="#account" style="color:var(--yellow)">Accedi</a> per mettere i tuoi punti in classifica.'}</p>
+  <p class="coachline"><b>${esc(cm[0])}</b> ${esc(cm[1])}</p>
   ${S.code?`<p class="muted">Codice sfida: <b class="mono">${esc(S.code)}</b>. Confronta il punteggio con chi ha usato lo stesso codice.</p>`:''}
   ${S.errs.length?`<div class="stack"><h3>Da rivedere</h3><div class="errs">${S.errs.slice(0,8).map((x,i)=>`<div class="er"><span class="mono">${fmt(x.n)} × ${fmt(x.m)} = ${fmt(x.n*x.m)} <span class="muted">(tu: ${esc(x.given)})</span></span><button class="btn sm ghost" data-i="${i}">Rivedi passo passo</button></div>`).join('')}</div></div>`:''}
   <div class="row"><button class="btn y" id="soloAgain">Rigioca</button><button class="btn ghost" id="soloBack">Cambia impostazioni</button></div>`;
@@ -995,7 +1049,7 @@ function escRender(){
 function mmss(t){t=Math.max(0,Math.ceil(t));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')}
 function escStart(){
   E.team=$('escTeam').value.trim();E.rtl=$('escRtl').checked;E.code=$('escCode').value.trim();
-  E.rng=makeRng(E.code?E.code+'|'+E.diff:'');Object.assign(E,{phase:'play',t:900,room:0,wrong:0,hints:0,paused:false,last:performance.now(),won:false});
+  E.rng=makeRng(E.code?E.code+'|'+E.diff:'');Object.assign(E,{warned:false,phase:'play',t:900,room:0,wrong:0,hints:0,paused:false,last:performance.now(),won:false});
   E.rooms=ROOMS.map(R=>escPrepare(R));
   clearInterval(E.int);E.int=setInterval(escTick,250);beep(220,.4,'sawtooth',.04);escRender();
 }
@@ -1013,7 +1067,7 @@ function escPrepare(R){
   }
   const b=R.build(r);b.locks.forEach(l=>{l.solved=false;l.box=null});return {R,story:b.story,locks:b.locks,act:0,kind:'locks'};
 }
-function escTick(){if(E.phase!=='play'||E.paused)return;const now=performance.now();E.t-=(now-E.last)/1000;E.last=now;if(E.t<=0){E.t=0;escFinish(false)}escHud()}
+function escTick(){if(E.phase!=='play'||E.paused)return;const now=performance.now();E.t-=(now-E.last)/1000;E.last=now;if(!E.warned&&E.t<=180&&E.t>0){E.warned=true;cheer('Tre minuti!','Respira e calcola con calma: ce la puoi fare.','push')}if(E.t<=0){E.t=0;escFinish(false)}escHud()}
 function escPause(){if(E.phase==='play'){E.paused=true}}
 function escResume(){if(E.phase==='play'&&E.paused){E.paused=false;E.last=performance.now()}}
 function escPenalty(s,txt){E.t-=s;E.wrong++;sNo();const el=document.createElement('div');el.className='penalty';el.textContent='−'+s+' s';$('esc').appendChild(el);setTimeout(()=>el.remove(),1200);shake($('escScene'));if(txt)toast(txt);if(E.t<=0){E.t=0;escFinish(false)}escHud()}
@@ -1068,11 +1122,14 @@ function escWires(rm){
       if(rm.cand[i]===rm.n*9){sOk();draw();escNextRoom()}else{draw();escPenalty(60,'Scintille! Cavo sbagliato: −60 secondi')}})};draw();
 }
 function escNextRoom(){
-  setTimeout(()=>{if(E.phase!=='play')return;if(E.room>=ROOMS.length-1)return escFinish(true);E.room++;beep(440,.15);setTimeout(()=>beep(660,.2),120);escRender();window.scrollTo(0,0)},700);
+  setTimeout(()=>{if(E.phase!=='play')return;if(E.room>=ROOMS.length-1)return escFinish(true);E.room++;if(E.room===3)cheer('Sei a metà strada!',rnd(['Tre stanze superate: il laboratorio non ti fermerà.','Metà fatta, continua così!']),'ok');else if(E.room===5)cheer('Ultima stanza!','Ancora uno sforzo e sei fuori.','push');else cheer('Porta aperta!',rnd(['Avanti così.','Calcolo perfetto.','Il Prof. T sarebbe fiero.']),'ok');beep(440,.15);setTimeout(()=>beep(660,.2),120);escRender();window.scrollTo(0,0)},700);
 }
 function escFinish(won,quit){
   clearInterval(E.int);E.phase='end';E.won=won;E.quit=!!quit;keyTarget=null;
-  if(won){E.starsN=E.t>=360?3:E.t>=180?2:1;addXP(30+E.starsN*10);if(!P.esc||E.t>P.esc){P.esc=Math.ceil(E.t);save()}award('tl_record_escape',{p_seconds_left:Math.ceil(E.t)},'Escape room')}
+  const prevEsc=P.esc;
+  if(won){E.starsN=E.t>=360?3:E.t>=180?2:1;addXP(30+E.starsN*10);if(!P.esc||E.t>P.esc){P.esc=Math.ceil(E.t);save()}
+    if(prevEsc&&E.t>prevEsc)cheer('Nuovo record di fuga!',`${mmss(E.t)} rimasti: meglio di ${mmss(prevEsc)}.`,'gold',true);else cheer('Sei fuori!',E.starsN===3?'Tre stelle: fuga perfetta!':'Ora prova a uscire con più tempo rimasto.','gold',true);dayTick();award('tl_record_escape',{p_seconds_left:Math.ceil(E.t)},'Escape room')}
+  else if(!quit)cheer('Ci sei quasi!',`Sei arrivato alla stanza ${E.room+1} di 6. Riprova!`,'push');
   escRender();
 }
 function escEndRender(){
@@ -1243,6 +1300,8 @@ async function gResume(saved){Object.assign(G,{pid:saved.pid,token:saved.token})
   try{await gRefresh();gSubscribe()}catch(e){const m=errMsg(e);gReset();gJoinForm(m===ERRS.not_player?m:'')}}
 async function gRefresh(){
   const st=await rpc('tl_player_state',{p_player:G.pid,p_token:G.token});
+  if(st.room.status==='reveal'&&G.revQ!==st.room.current_q){if(G.revRank&&st.rank<G.revRank)cheer('Sei salito!',`Ora sei ${st.rank}° su ${st.players}.`,'gold');G.revRank=st.rank;G.revQ=st.room.current_q}
+  if(st.room.status==='ended'&&!G.endCheer){G.endCheer=true;if(st.rank===1)cheer('Hai vinto la partita!','Primo posto: complimenti!','gold',true);else if(st.rank<=3)cheer('Sul podio!',`${st.rank}° posto su ${st.players}: bravissimo!`,'gold',true);else cheer('Partita finita!',`${st.rank}° posto: alla prossima si sale!`,'push')}
   G.player=st.player;G.nick=st.player.nickname;G.room=st.room;G.rank=st.rank;G.np=st.players;G.q=st.question||null;syncClock(st.room);gRender();
 }
 function gSubscribe(){
@@ -1288,7 +1347,7 @@ async function gKey(k){
   try{const res=await rpc('tl_submit',{p_player:G.pid,p_token:G.token,p_q:qi,p_value:G.ans.v});
     G.res=res;Object.assign(G.player,{score:res.score,streak:res.streak,q_pos:res.q_pos,finished:res.finished,last_correct:res.correct,last_points:res.points});
     if(r.mode==='live')G.player.last_q=qi;else G.q=res.next||null;
-    res.correct?sOk():sNo();gRender(true);
+    res.correct?sOk():sNo();if(res.correct){dayTick();if([3,5,10].includes(res.streak))cheer(`${res.streak} di fila!`,rnd(['Continua così!','Sei in forma!','Che ritmo!']),'ok')}gRender(true);
   }catch(e){$('gFb').className='fb no';$('gFb').textContent=errMsg(e);gRefresh().catch(()=>{})}
   finally{G.sending=false}
 }
@@ -1303,9 +1362,16 @@ const dLabel=d=>d==='escape'?'Escape room':tLabel(pT(d));
 const DISCS=[...ORDER.map(String),'escape'];
 async function award(fn,args,label){
   if(!AUTH)return null;
-  try{const r=await rpc(fn,Object.assign({p_token:AUTH.token},args));if(r&&r.points>0)toast(`+${r.points} punti in classifica${label?' · '+label:''}`);return r}
+  try{const r=await rpc(fn,Object.assign({p_token:AUTH.token},args));if(r&&r.points>0){toast(`+${r.points} punti in classifica${label?' · '+label:''}`);rankCheck()}return r}
   catch(e){if(errMsg(e)===ERRS.not_logged){setAuth(null);toast(ERRS.not_logged)}return null}
 }
+async function rankCheck(){if(!AUTH)return;try{const me=await rpc('tl_me',{p_token:AUTH.token});if(!me.total)return;
+  P.rank=P.rank||{};const prev=P.rank[AUTH.username];P.rank[AUTH.username]=me.rank;save();
+  if(!prev||me.rank>=prev)return;
+  if(me.rank===1)cheer('Primo posto!','Sei in testa alla classifica generale.','gold',true);
+  else if(me.rank<=3&&prev>3)cheer('Sei sul podio!',`${me.rank}° nella classifica generale.`,'gold',true);
+  else if(me.rank<=10&&prev>10)cheer('Sei nella top 10!',`${me.rank}° posto: ora compari nella classifica della Home.`,'gold',true);
+  else cheer('Sei salito in classifica!',`Dal ${prev}° al ${me.rank}° posto.`,'ok')}catch(e){}}
 let accTab='login';
 async function accountRender(){
   const el=$('accBox');keyTarget=null;
