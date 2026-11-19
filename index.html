@@ -1308,7 +1308,7 @@ async function accountRender(){
       if(accTab==='signup'&&pw!==$('accPass2').value)return $('accMsg').textContent='Le due password non coincidono.';
       $('accGo').disabled=true;$('accMsg').textContent='';
       try{const r=await rpc(accTab==='login'?'tl_login':'tl_signup',{p_username:u,p_password:pw});if(r.error)throw new Error(r.error);
-        setAuth({token:r.token,username:r.username});sOk();toast('Ciao '+r.username+'!');accountRender()}
+        setAuth({token:r.token,username:r.username});sOk();toast('Ciao '+r.username+'!');location.hash='home'}
       catch(e){$('accMsg').textContent=errMsg(e);$('accGo').disabled=false}});
     $('accUser').focus();return;
   }
