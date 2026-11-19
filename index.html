@@ -300,6 +300,8 @@ input[type=text],input[type=number]{background:#132824;border:1px solid var(--li
 .gwrap{max-width:520px;margin:0 auto}
 .pininput{font-family:var(--f-mono);font-size:2rem;letter-spacing:.3em;text-align:center;font-weight:800}
 .gtop{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.iconbtn.snd{display:inline-grid;place-items:center;padding:6px 8px;line-height:0}
+.iconbtn.snd.mute{color:var(--muted)}
 .iconbtn.acc{font-weight:700;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .iconbtn.acc.on{background:var(--yellow);color:#1b1b1b !important;border-color:var(--yellow)}
 .heroright{display:flex;flex-direction:column;gap:10px;min-width:0}
@@ -342,7 +344,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
       <a href="#classifica" data-v="classifica">Classifica</a>
     </nav>
     <div class="xpchip"><span id="lvlname">Apprendista</span><span class="xpbar"><i id="xpfill" style="width:0%"></i></span><span class="mono" id="xptxt">0 XP</span>
-      <a class="iconbtn acc" id="accBtn" href="#account" style="text-decoration:none;color:inherit">Accedi</a><button class="iconbtn" id="sndbtn" aria-pressed="true" title="Attiva o disattiva i suoni">Suoni sì</button></div>
+      <a class="iconbtn acc" id="accBtn" href="#account" style="text-decoration:none;color:inherit">Accedi</a><button class="iconbtn snd" id="sndbtn" aria-pressed="true" title="Suoni attivi" aria-label="Suoni attivi: tocca per disattivarli"></button></div>
   </div>
 </header>
 
@@ -724,7 +726,8 @@ let actx=null;
 function beep(f,d=.12,type='sine',vol=.08){if(!P.sound)return;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();const o=actx.createOscillator(),g=actx.createGain();o.type=type;o.frequency.value=f;g.gain.value=vol;o.connect(g);g.connect(actx.destination);const t=actx.currentTime;g.gain.exponentialRampToValueAtTime(.0001,t+d);o.start(t);o.stop(t+d)}catch(e){}}
 const sOk=()=>{beep(660,.1);setTimeout(()=>beep(990,.14),90)};
 const sNo=()=>beep(150,.25,'square',.05);
-function renderSnd(){$('sndbtn').textContent=P.sound?'Suoni sì':'Suoni no';$('sndbtn').setAttribute('aria-pressed',P.sound)}
+const SND_ON='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19.5 5.5a9 9 0 0 1 0 13"/></svg>',SND_OFF='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M3 3l18 18" stroke-width="2.4"/></svg>';
+function renderSnd(){const b=$('sndbtn');b.innerHTML=P.sound?SND_ON:SND_OFF;b.setAttribute('aria-pressed',P.sound);b.setAttribute('aria-label',P.sound?'Suoni attivi: tocca per disattivarli':'Suoni disattivati: tocca per attivarli');b.title=P.sound?'Suoni attivi':'Suoni disattivati';b.classList.toggle('mute',!P.sound)}
 $('sndbtn').onclick=()=>{P.sound=!P.sound;save();renderSnd();if(P.sound)sOk()};
 
 /* ================= TASTIERINO E RISPOSTA ================= */
