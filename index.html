@@ -300,6 +300,8 @@ input[type=text],input[type=number]{background:#132824;border:1px solid var(--li
 .gwrap{max-width:520px;margin:0 auto}
 .pininput{font-family:var(--f-mono);font-size:2rem;letter-spacing:.3em;text-align:center;font-weight:800}
 .gtop{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.iconbtn.acc{font-weight:700;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.iconbtn.acc.on{background:var(--yellow);color:#1b1b1b !important;border-color:var(--yellow)}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--chalk);color:var(--bg);padding:10px 18px;border-radius:12px;font-weight:700;z-index:80;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.on{opacity:1}
 footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
@@ -320,9 +322,10 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
       <a href="#escape" data-v="escape">Escape room</a>
       <a href="#stanza" data-v="stanza">Stanza live</a>
       <a href="#gioca" data-v="gioca">Entra con PIN</a>
+      <a href="#classifica" data-v="classifica">Classifica</a>
     </nav>
     <div class="xpchip"><span id="lvlname">Apprendista</span><span class="xpbar"><i id="xpfill" style="width:0%"></i></span><span class="mono" id="xptxt">0 XP</span>
-      <button class="iconbtn" id="sndbtn" aria-pressed="true" title="Attiva o disattiva i suoni">Suoni sì</button></div>
+      <a class="iconbtn acc" id="accBtn" href="#account" style="text-decoration:none;color:inherit">Accedi</a><button class="iconbtn" id="sndbtn" aria-pressed="true" title="Attiva o disattiva i suoni">Suoni sì</button></div>
   </div>
 </header>
 
@@ -482,6 +485,17 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
   </div>
   <div class="card" style="margin-top:16px"><h3>Sei uno studente?</h3><p class="muted" style="margin-top:4px">Vai su <a href="#gioca" style="color:var(--yellow)">Entra con PIN</a> e scrivi il codice che vedi sulla LIM.</p></div>
 </section>
+
+<!-- ACCOUNT -->
+<section class="view" id="view-account"><div id="accBox" class="gwrap" style="max-width:640px"></div></section>
+
+<!-- CLASSIFICA -->
+<section class="view" id="view-classifica"><div class="card stack">
+  <div><div class="eyebrow">Tutti gli iscritti</div><h2 id="lbTitle">Classifica generale</h2><p class="muted" id="lbSub"></p></div>
+  <div class="chips" id="lbChips"></div>
+  <div id="lbMe"></div>
+  <div id="lbList"></div>
+</div></section>
 
 <!-- GIOCA (studente) -->
 <section class="view" id="view-gioca"><div id="gioca" class="gwrap"></div></section>
@@ -691,7 +705,7 @@ class Answer{constructor(el,rtl){this.el=el;this.rtl=rtl;this.v='';this.render()
   val(){return this.v.replace(/^0+(?=\d)/,'')}}
 
 /* ================= ROUTING ================= */
-const VIEWS=['home','impara','solo','duello','escape','stanza','gioca'];
+const VIEWS=['home','impara','solo','duello','escape','stanza','gioca','account','classifica'];
 function route(){
   const v=VIEWS.includes(location.hash.slice(1))?location.hash.slice(1):'home';
   if(v!=='solo'&&S.running)soloEnd(true);
@@ -705,6 +719,8 @@ function route(){
   if(v==='escape')escRender();
   if(v==='stanza')roomSetupRender();
   if(v==='gioca')giocaOpen();
+  if(v==='account')accountRender();
+  if(v==='classifica')leaderboardRender();
   window.scrollTo(0,0);
 }
 window.addEventListener('hashchange',route);
@@ -778,7 +794,7 @@ function learnAccept(auto){
   $('log').insertAdjacentHTML('afterbegin',`<div>${esc(stepText(cur))}</div>`);
   L.k++;L.err=0;
   if(L.k>=L.sol.steps.length){L.done=true;
-    if(!auto){st(L.m).guided++;addXP(L.errTot===0?15:8);sOk();setTimeout(sOk,180)}}
+    if(!auto){st(L.m).guided++;addXP(L.errTot===0?15:8);sOk();setTimeout(sOk,180);award('tl_record_lesson',{p_t:String(L.m),p_n:L.n,p_m:L.mult,p_errors:L.errTot},tLabel(L.m))}}
   learnRender();
 }
 $('mGuided').onclick=()=>{L.mode='guided';learnStart(L.n)};
@@ -829,7 +845,7 @@ function soloKey(k){
   if(k==='del')return S.ans.del();
   if(k!=='ok')return S.ans.push(k);
   if(!S.ans.v)return;
-  const right=String(S.n*S.m);
+  const right=String(S.n*S.m);S.log.push({n:S.n,m:S.m,t:String(S.tech),v:S.ans.val()});
   if(S.ans.val()===right){
     S.streak++;const pts=Math.round(String(S.n).length*String(S.m).length*10*mult());S.score+=pts;S.ok++;st(S.tech).correct++;
     $('sFb').className='fb ok';$('sFb').textContent=`Giusto! +${pts}`;sOk();flashOk($('sAns'));soloNext();
@@ -839,7 +855,7 @@ function soloKey(k){
   }
   soloHud();
 }
-$('sSkip').onclick=()=>{if(!S.running)return;S.streak=0;S.errs.push({n:S.n,m:S.m,t:S.tech,given:'(passato)'});$('sFb').className='fb';$('sFb').textContent='Passato';soloNext();soloHud()};
+$('sSkip').onclick=()=>{if(!S.running)return;S.streak=0;S.log.push({n:S.n,m:S.m,t:String(S.tech),v:''});S.errs.push({n:S.n,m:S.m,t:S.tech,given:'(passato)'});$('sFb').className='fb';$('sFb').textContent='Passato';soloNext();soloHud()};
 $('sStop').onclick=()=>soloEnd(false);
 function soloEnd(silent){
   clearInterval(S.int);if(!S.running)return;S.running=false;keyTarget=null;
@@ -850,11 +866,13 @@ function soloEnd(silent){
   const acc=S.ok+S.errs.length?Math.round(S.ok/(S.ok+S.errs.length)*100):0;
   e.innerHTML=`<div><div class="eyebrow">Tempo scaduto</div><h2>${S.score} punti${rec&&S.score>0?' · nuovo record!':''}</h2></div>
   <div class="grid g4"><div class="stat"><span class="muted">Giuste</span><b>${S.ok}</b></div><div class="stat"><span class="muted">Sbagliate o passate</span><b>${S.errs.length}</b></div><div class="stat"><span class="muted">Precisione</span><b>${acc}%</b></div><div class="stat"><span class="muted">XP guadagnati</span><b>+${xp}</b></div></div>
+  <p class="muted" id="soloLb">${AUTH?'Salvo i punti in classifica…':'<a href="#account" style="color:var(--yellow)">Accedi</a> per mettere i tuoi punti in classifica.'}</p>
   ${S.code?`<p class="muted">Codice sfida: <b class="mono">${esc(S.code)}</b>. Confronta il punteggio con chi ha usato lo stesso codice.</p>`:''}
   ${S.errs.length?`<div class="stack"><h3>Da rivedere</h3><div class="errs">${S.errs.slice(0,8).map((x,i)=>`<div class="er"><span class="mono">${fmt(x.n)} × ${fmt(x.m)} = ${fmt(x.n*x.m)} <span class="muted">(tu: ${esc(x.given)})</span></span><button class="btn sm ghost" data-i="${i}">Rivedi passo passo</button></div>`).join('')}</div></div>`:''}
   <div class="row"><button class="btn y" id="soloAgain">Rigioca</button><button class="btn ghost" id="soloBack">Cambia impostazioni</button></div>`;
   e.querySelectorAll('.er button').forEach(b=>b.onclick=()=>{const x=S.errs[+b.dataset.i];L.m=x.t!==undefined?x.t:techOf(x.m);L.mult=x.m;L.n=x.n;L.mode='guided';location.hash='impara'});
   $('soloAgain').onclick=()=>$('soloStart').click();$('soloBack').onclick=soloSetupRender;
+  if(AUTH&&S.log.length)award('tl_record_solo',{p_answers:S.log.slice(0,150)},'Sfida solo').then(r=>{const el=$('soloLb');if(el)el.innerHTML=r?`<b style="color:var(--yellow)">+${r.points} punti</b> nella classifica. <a href="#classifica" style="color:var(--yellow)">Vedi la classifica</a>`:'I punti non sono stati salvati: controlla la connessione.'});else if(AUTH){const el=$('soloLb');if(el)el.textContent=''}
 }
 
 /* ================= DUELLO ================= */
@@ -1038,7 +1056,7 @@ function escNextRoom(){
 }
 function escFinish(won,quit){
   clearInterval(E.int);E.phase='end';E.won=won;E.quit=!!quit;keyTarget=null;
-  if(won){E.starsN=E.t>=360?3:E.t>=180?2:1;addXP(30+E.starsN*10);if(!P.esc||E.t>P.esc){P.esc=Math.ceil(E.t);save()}}
+  if(won){E.starsN=E.t>=360?3:E.t>=180?2:1;addXP(30+E.starsN*10);if(!P.esc||E.t>P.esc){P.esc=Math.ceil(E.t);save()}award('tl_record_escape',{p_seconds_left:Math.ceil(E.t)},'Escape room')}
   escRender();
 }
 function escEndRender(){
@@ -1191,7 +1209,7 @@ function gJoinForm(msg){
   keyTarget=null;
   $('gioca').innerHTML=`<div class="card stack"><div><div class="eyebrow">Stanza live</div><h2>Entra con il PIN</h2><p class="muted">Il PIN di 6 cifre è sulla LIM.</p></div>
   <div class="field"><label for="jPin">PIN della stanza</label><input id="jPin" type="text" inputmode="numeric" maxlength="7" autocomplete="off" class="pininput" value="${prefPin}"></div>
-  <div class="field"><label for="jNick">Il tuo nome in classifica</label><input id="jNick" type="text" maxlength="16" autocomplete="off" placeholder="es. Giulia B."></div>
+  <div class="field"><label for="jNick">Il tuo nome in classifica</label><input id="jNick" type="text" maxlength="16" autocomplete="off" placeholder="es. Giulia B." ${AUTH?`value="${esc(AUTH.username)}" disabled`:''}>${AUTH?'<span class="muted" style="font-size:.85rem">Entri con il tuo account: i punti vanno anche nella classifica.</span>':'<span class="muted" style="font-size:.85rem"><a href="#account" style="color:var(--yellow)">Accedi</a> se vuoi che i punti vadano in classifica.</span>'}</div>
   <button class="btn y" id="jGo">Entra nella stanza</button><p class="fb no" id="jMsg">${esc(msg||'')}</p></div>`;
   const go=()=>gJoin();$('jGo').onclick=go;['jPin','jNick'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter')go()}));
   (prefPin?$('jNick'):$('jPin')).focus();
@@ -1201,7 +1219,7 @@ async function gJoin(){
   if(pin.length!==6)return $('jMsg').textContent='Il PIN ha 6 cifre.';
   if(nick.length<2)return $('jMsg').textContent=ERRS.bad_nick;
   $('jGo').disabled=true;$('jMsg').textContent='';
-  try{const r=await rpc('tl_join',{p_pin:pin,p_nick:nick});ss('tl-player',{pid:r.player_id,token:r.token});
+  try{const r=await rpc('tl_join',{p_pin:pin,p_nick:nick,p_user_token:AUTH?AUTH.token:null});ss('tl-player',{pid:r.player_id,token:r.token});
     Object.assign(G,{pid:r.player_id,token:r.token,nick:r.nickname});syncClock(r.room);await gRefresh();gSubscribe();sOk()}
   catch(e){$('jMsg').textContent=errMsg(e);$('jGo').disabled=false}
 }
@@ -1259,6 +1277,69 @@ async function gKey(k){
   finally{G.sending=false}
 }
 
+/* ================= ACCOUNT E CLASSIFICHE ================= */
+let AUTH=null;
+try{AUTH=JSON.parse(localStorage.getItem('tl-auth')||'null')}catch(e){}
+function setAuth(a){AUTH=a;try{a?localStorage.setItem('tl-auth',JSON.stringify(a)):localStorage.removeItem('tl-auth')}catch(e){}renderAccBtn()}
+function renderAccBtn(){const b=$('accBtn');if(!b)return;b.textContent=AUTH?AUTH.username:'Accedi';b.classList.toggle('on',!!AUTH)}
+Object.assign(ERRS,{bad_username:'Il nome utente deve avere da 3 a 16 caratteri: lettere, numeri, punto, trattino o trattino basso.',bad_password:'La password deve avere almeno 6 caratteri.',username_taken:'Questo nome utente esiste già: scegline un altro.',bad_login:'Nome utente o password sbagliati.',locked:'Troppi tentativi sbagliati: riprova tra 5 minuti.',not_logged:'Sessione scaduta: accedi di nuovo.'});
+const dLabel=d=>d==='escape'?'Escape room':tLabel(pT(d));
+const DISCS=[...ORDER.map(String),'escape'];
+async function award(fn,args,label){
+  if(!AUTH)return null;
+  try{const r=await rpc(fn,Object.assign({p_token:AUTH.token},args));if(r&&r.points>0)toast(`+${r.points} punti in classifica${label?' · '+label:''}`);return r}
+  catch(e){if(errMsg(e)===ERRS.not_logged){setAuth(null);toast(ERRS.not_logged)}return null}
+}
+let accTab='login';
+async function accountRender(){
+  const el=$('accBox');keyTarget=null;
+  if(!AUTH){
+    el.innerHTML=`<div class="card stack"><div><div class="eyebrow">Il tuo account</div><h2>${accTab==='login'?'Accedi':'Crea un account'}</h2><p class="muted" style="max-width:60ch">Con un account i punti di Sfida solo, lezioni, escape room e stanze live finiscono nella classifica di ogni tipo di calcolo e in quella generale. Non serve l'email.</p></div>
+    <div class="row"><button class="chip txt ${accTab==='login'?'on':''}" id="tabLogin">Ho già un account</button><button class="chip txt ${accTab==='signup'?'on':''}" id="tabSignup">Sono nuovo</button></div>
+    <form id="accForm" class="stack" style="max-width:420px" autocomplete="on">
+      <div class="field"><label for="accUser">Nome utente</label><input type="text" id="accUser" maxlength="16" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="es. fulmine_07"></div>
+      ${accTab==='signup'?'<p class="muted" style="font-size:.88rem;margin-top:-6px">Usa un soprannome, non nome e cognome: la classifica la vedono tutti.</p>':''}
+      <div class="field"><label for="accPass">Password</label><input type="password" id="accPass" maxlength="72" autocomplete="${accTab==='login'?'current-password':'new-password'}"></div>
+      ${accTab==='signup'?'<div class="field"><label for="accPass2">Ripeti la password</label><input type="password" id="accPass2" maxlength="72" autocomplete="new-password"></div><p class="muted" style="font-size:.88rem">Senza email la password non si può recuperare da soli: scrivila in un posto sicuro. Se la dimentichi, chiedi al prof.</p>':''}
+      <button class="btn y" type="submit" id="accGo">${accTab==='login'?'Accedi':'Crea l\'account'}</button><p class="fb no" id="accMsg"></p>
+    </form></div>`;
+    $('tabLogin').onclick=()=>{accTab='login';accountRender()};$('tabSignup').onclick=()=>{accTab='signup';accountRender()};
+    $('accForm').addEventListener('submit',async ev=>{ev.preventDefault();const u=$('accUser').value.trim(),pw=$('accPass').value;
+      if(accTab==='signup'&&pw!==$('accPass2').value)return $('accMsg').textContent='Le due password non coincidono.';
+      $('accGo').disabled=true;$('accMsg').textContent='';
+      try{const r=await rpc(accTab==='login'?'tl_login':'tl_signup',{p_username:u,p_password:pw});if(r.error)throw new Error(r.error);
+        setAuth({token:r.token,username:r.username});sOk();toast('Ciao '+r.username+'!');accountRender()}
+      catch(e){$('accMsg').textContent=errMsg(e);$('accGo').disabled=false}});
+    $('accUser').focus();return;
+  }
+  el.innerHTML=`<div class="card"><p class="muted">Carico i tuoi punti…</p></div>`;
+  try{const me=await rpc('tl_me',{p_token:AUTH.token});
+    const rows=DISCS.filter(d=>me.by[d]).sort((a,b)=>me.by[b]-me.by[a]);
+    el.innerHTML=`<div class="card stack"><div class="row" style="justify-content:space-between"><div><div class="eyebrow">Il tuo account</div><h2>${esc(me.username)}</h2></div><button class="btn sm ghost" id="accOut">Esci</button></div>
+    <div class="grid g4"><div class="stat"><span class="muted">Punti totali</span><b>${me.total}</b></div><div class="stat"><span class="muted">Classifica generale</span><b>${me.total?me.rank+'°':'—'}</b></div><div class="stat"><span class="muted">Giocatori in classifica</span><b>${me.players}</b></div></div>
+    <h3>Punti per tipo di calcolo</h3>
+    ${rows.length?`<div class="lb">${rows.map(d=>`<a class="r" href="#classifica" data-d="${d}" style="text-decoration:none;color:inherit"><span class="pos">•</span><span class="n">${dLabel(d)}</span><span class="mono"><b>${me.by[d]}</b></span></a>`).join('')}</div>`:'<p class="muted">Ancora nessun punto: gioca a Sfida solo, completa una lezione o entra in una stanza live.</p>'}
+    <div class="row"><a class="btn y" href="#classifica">Vedi le classifiche</a><a class="btn ghost" href="#solo">Gioca a Sfida solo</a></div></div>`;
+    $('accOut').onclick=async()=>{try{await rpc('tl_logout',{p_token:AUTH.token})}catch(e){}setAuth(null);accountRender()};
+    el.querySelectorAll('a[data-d]').forEach(a=>a.onclick=()=>{LB.d=a.dataset.d});
+  }catch(e){if(errMsg(e)===ERRS.not_logged){setAuth(null);return accountRender()}el.innerHTML=`<div class="card"><p class="fb no">${esc(errMsg(e))}</p></div>`}
+}
+const LB={d:'all'};
+async function leaderboardRender(){
+  const opts=[['all','Generale'],...DISCS.map(d=>[d,dLabel(d)])];
+  $('lbChips').innerHTML=opts.map(o=>`<button class="chip txt ${String(LB.d)===String(o[0])?'on':''}" data-d="${o[0]}">${o[1]}</button>`).join('');
+  $('lbChips').querySelectorAll('button').forEach(b=>b.onclick=()=>{LB.d=b.dataset.d;leaderboardRender()});
+  $('lbTitle').textContent=LB.d==='all'?'Classifica generale':'Classifica · '+dLabel(LB.d);
+  $('lbSub').textContent=LB.d==='all'?'Somma dei punti di tutte le discipline.':'Solo i punti guadagnati con questo tipo di calcolo.';
+  $('lbList').innerHTML='<p class="muted">Carico la classifica…</p>';
+  try{const r=await rpc('tl_leaderboard',{p_disc:LB.d==='all'?null:String(LB.d),p_token:AUTH?AUTH.token:null});
+    const top=r.top||[];
+    $('lbList').innerHTML=top.length?`<div class="lb">${top.map(x=>`<div class="r ${x.me?'fin':''}"><span class="pos">${x.rank}</span><span class="n">${esc(x.username)}${x.me?' <span class="muted">(tu)</span>':''}</span><span class="mono"><b>${x.points}</b></span></div>`).join('')}</div>`:'<p class="muted">Nessuno ha ancora punti in questa classifica. Il primo posto è libero!</p>';
+    $('lbMe').innerHTML=!AUTH?`<p class="muted">Vuoi comparire in classifica? <a href="#account" style="color:var(--yellow)">Accedi o crea un account</a>.</p>`
+      :r.me?(top.some(x=>x.me)?'':`<div class="lb"><div class="r fin"><span class="pos">${r.me.rank}</span><span class="n">${esc(r.me.username)} <span class="muted">(tu)</span></span><span class="mono"><b>${r.me.points}</b></span></div></div>`):'<p class="muted">Non hai ancora punti in questa classifica.</p>';
+  }catch(e){$('lbList').innerHTML=`<p class="fb no">${esc(errMsg(e))}</p>`}
+}
+
 /* ================= POPUP PAROLE ================= */
 let glossPrevKey=null;
 function glossOpen(){glossPrevKey=keyTarget;keyTarget=null;$('glossModal').classList.add('on');$('glossClose').focus()}
@@ -1269,7 +1350,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('glossModal').cla
 
 /* ================= AVVIO ================= */
 if(prefPin&&!location.hash)history.replaceState(null,'',location.pathname+location.search+'#gioca');
-renderXP();renderSnd();route();
+renderXP();renderSnd();renderAccBtn();route();
 </script>
 </body>
 </html>
