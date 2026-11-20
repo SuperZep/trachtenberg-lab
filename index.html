@@ -368,6 +368,10 @@ input[type=text],input[type=number]{background:#132824;border:1px solid var(--li
 .wstats{display:flex;flex-wrap:wrap;gap:8px}
 .wstats span{background:var(--panel2);border-radius:99px;padding:5px 12px;font-size:.9rem}
 .wstats b{font-family:var(--f-mono);color:var(--yellow)}
+.stepnav{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:10px}
+.stepnav .btn{min-height:40px}
+@media (max-width:420px){.stepnav{gap:6px;flex-wrap:nowrap}.stepnav .btn{padding:7px 9px;font-size:.88rem;gap:5px;white-space:nowrap}}
+.stepnav svg{flex:0 0 auto}
 .toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--chalk);color:var(--bg);padding:10px 18px;border-radius:12px;font-weight:700;z-index:80;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.on{opacity:1}
 footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
@@ -467,12 +471,12 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
         <div class="work"><div id="rowTop" class="cells"></div><div class="times" id="multLbl"></div><div class="rline"></div><div id="rowBot" class="cells"></div></div>
         <div class="infobar" id="infoBar"></div>
         <p class="note" id="stepNote" style="text-align:center"></p>
-        <div id="learnInput">
-          <div class="kp" id="learnKp"></div>
-          <div class="row" style="justify-content:center;margin-top:10px">
-            <button class="btn sm ghost" id="hintBtn">Suggerimento</button>
-            <button class="btn sm ghost" id="showBtn">Mostra questa cifra</button>
-          </div>
+        <div id="learnInput"><div class="kp" id="learnKp"></div></div>
+        <div class="stepnav" id="stepNav">
+          <button class="btn sm ghost" id="stBack" type="button" title="Torna al passo precedente (freccia sinistra)"></button>
+          <button class="btn sm ghost" id="hintBtn" type="button">Suggerimento</button>
+          <button class="btn sm y" id="stPlay" type="button" title="Pausa o riprendi l'animazione (barra spaziatrice)"></button>
+          <button class="btn sm ghost" id="stFwd" type="button" title="Vai al passo successivo (freccia destra)"></button>
         </div>
         <div class="say" id="say"></div>
         <div><div class="eyebrow" style="margin-bottom:6px">Passaggi fatti</div><div class="log" id="log"></div></div>
@@ -825,6 +829,7 @@ const VIEWS=['home','impara','solo','duello','escape','stanza','gioca','account'
 function route(){
   const v=VIEWS.includes(location.hash.slice(1))?location.hash.slice(1):'home';
   if(v!=='solo'&&S.running)soloEnd(true);
+  if(v!=='impara'&&L.playing)playStop();
   if(v!=='escape')escPause();else escResume();
   document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on',s.id==='view-'+v));
   document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
@@ -855,16 +860,43 @@ function learnOpen(){
 }
 function learnNew(){const p=genProblem(Math.random,L.m,'medio');L.mult=p.m;learnStart(isMulti(L.m)&&L.m!=='u1'?p.n:genNum(Math.random,3,5))}
 function learnStart(n){
-  clearInterval(L.timer);L.n=n;if(!isMulti(L.m))L.mult=L.m;L.sol=solveBy(n,L.mult,L.m);L.k=0;L.err=0;L.errTot=0;L.done=false;
+  clearInterval(L.timer);L.playing=false;L.n=n;if(!isMulti(L.m))L.mult=L.m;L.sol=solveBy(n,L.mult,L.m);L.k=0;L.err=0;L.errTot=0;L.done=false;L.seen=0;L.credited=false;
   $('log').innerHTML='';
   keypad($('learnKp'),learnKey,{noOk:true});
   keyTarget=learnKey;
   $('mGuided').classList.toggle('on',L.mode==='guided');$('mWatch').classList.toggle('on',L.mode==='watch');
   $('learnInput').style.display=L.mode==='guided'?'':'none';
   learnRender();
-  if(L.mode==='watch')L.timer=setInterval(()=>{if(L.done){clearInterval(L.timer);return}learnAccept(true)},1700);
+  if(L.mode==='watch')playStart();
 }
-function learnRender(){
+/* ---------- frecce avanti/indietro e pausa ---------- */
+const IC={back:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15 5l-8 7 8 7z"/></svg>',
+  fwd:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 5l8 7-8 7z"/></svg>',
+  pause:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
+  play:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>',
+  again:'<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.6 9A7 7 0 1 1 5 13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M3 4v7h7z" fill="currentColor"/></svg>'};
+function playStart(){clearInterval(L.timer);L.playing=true;L.timer=setInterval(()=>{if(L.done){playStop();return}learnAccept(true)},1700);navRender()}
+function playStop(){clearInterval(L.timer);L.playing=false;navRender()}
+function learnBack(){if(!L.sol||L.k===0)return;if(L.playing)playStop();L.k--;L.done=false;L.err=0;const f=$('log').firstElementChild;if(f)f.remove();learnRender()}
+function learnFwd(){if(!L.sol||L.done)return;if(L.playing)playStop();
+  if(L.mode==='guided'&&L.k>=L.seen)L.errTot++;learnAccept(true)}
+function learnPlay(){if(L.mode!=='watch')return;if(L.playing)return playStop();
+  if(L.done){L.k=0;L.done=false;$('log').innerHTML='';learnRender()}playStart()}
+function navRender(){const nb=$('stBack');if(!nb||!L.sol)return;const g=L.mode==='guided';
+  nb.innerHTML=IC.back+'<span>Indietro</span>';nb.disabled=L.k===0;
+  $('stFwd').innerHTML=(g&&!L.done&&L.k>=L.seen?'<span>Mostra</span>':'<span>Avanti</span>')+IC.fwd;$('stFwd').disabled=L.done;
+  $('stFwd').title=g&&L.k>=L.seen?'Mostra questa cifra e vai avanti: conta come aiuto (freccia destra)':'Vai al passo successivo (freccia destra)';
+  $('hintBtn').style.display=g&&!L.done?'':'none';
+  const pl=$('stPlay');pl.style.display=g?'none':'';
+  pl.innerHTML=L.playing?IC.pause+'<span>Pausa</span>':L.done?IC.again+'<span>Ricomincia</span>':IC.play+'<span>Riprendi</span>';
+  pl.setAttribute('aria-pressed',L.playing?'true':'false')}
+$('stBack').onclick=learnBack;$('stFwd').onclick=learnFwd;$('stPlay').onclick=learnPlay;
+document.addEventListener('keydown',e=>{if(!$('view-impara').classList.contains('on')||document.querySelector('.modal.on,.overlay.on'))return;
+  const tg=e.target.tagName;if(tg==='INPUT'||tg==='SELECT'||tg==='TEXTAREA')return;
+  if(e.key==='ArrowLeft'){learnBack();e.preventDefault()}else if(e.key==='ArrowRight'){learnFwd();e.preventDefault()}
+  else if(e.key===' '&&L.mode==='watch'){learnPlay();e.preventDefault()}});
+function learnRender(){learnRender0();navRender()}
+function learnRender0(){
   const s=L.sol.s,steps=L.sol.steps,cur=steps[L.k],len=s.length;
   let top=`<div class="cell blank"></div>`;
   const zeros=(L.sol.direct||L.sol.tf)?L.sol.k:1,live=cur&&!cur.final&&!L.done;
@@ -912,9 +944,9 @@ function learnKey(k){
 function learnAccept(auto){
   const cur=L.sol.steps[L.k];
   $('log').insertAdjacentHTML('afterbegin',`<div>${esc(stepText(cur))}</div>`);
-  L.k++;L.err=0;
+  L.k++;L.err=0;L.seen=Math.max(L.seen,L.k);
   if(L.k>=L.sol.steps.length){L.done=true;
-    if(!auto){const s0=stars(L.m);st(L.m).guided++;learnCheer(s0);addXP(L.errTot===0?15:8);sOk();setTimeout(sOk,180);award('tl_record_lesson',{p_t:String(L.m),p_n:L.n,p_m:L.mult,p_errors:L.errTot},tLabel(L.m))}}
+    if(!auto&&!L.credited){L.credited=true;const s0=stars(L.m);st(L.m).guided++;learnCheer(s0);addXP(L.errTot===0?15:8);sOk();setTimeout(sOk,180);award('tl_record_lesson',{p_t:String(L.m),p_n:L.n,p_m:L.mult,p_errors:L.errTot},tLabel(L.m))}}
   learnRender();
 }
 function learnCheer(s0){
@@ -933,7 +965,6 @@ $('useN').onclick=()=>{const v=parseInt($('customN').value,10);if(!(v>0&&v<1e8))
   else if(isMulti(L.m)){const mv=parseInt($('customM').value,10);if(mv>=10&&mv<1e6){L.mult=mv;L.m=techOf(mv);if(!isMulti(L.m)){L.mult=L.m}}else if($('customM').value)return toast('Il moltiplicatore deve avere da 2 a 6 cifre')}
   learnStart(v)};
 $('hintBtn').onclick=()=>{L.err=Math.max(L.err,2);learnRender()};
-$('showBtn').onclick=()=>{if(!L.done){L.errTot++;learnAccept(true)}};
 
 /* ================= CHIP HELPER ================= */
 function chipGroup(el,opts,get,set,multi=false,txt=false){
