@@ -487,6 +487,17 @@ input[type=text],input[type=number]{background:#132824;border:1px solid var(--li
   #escPuzzle.withkp{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:16px;align-items:start}
   #escPuzzle.withkp #escKp{max-width:280px}
 }
+.qmodal{cursor:pointer;background:rgba(8,18,16,.82)}
+.qmodal.on .qbox{animation:qIn .35s ease-out}
+.qbox{margin:0;max-width:560px;width:100%;text-align:center;background:linear-gradient(160deg,#20403a,#16302b);border:1px solid rgba(255,210,63,.35);border-radius:20px;padding:26px 24px 16px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.qbox blockquote{margin:10px 0 12px;font-size:clamp(1.15rem,3.2vw,1.55rem);line-height:1.35;font-weight:700;color:#f4efe2}
+.qbox figcaption{color:var(--yellow,#ffd23f);font-weight:700;font-size:.95rem}
+.qbar{height:4px;border-radius:4px;background:rgba(255,255,255,.12);margin:16px 0 8px;overflow:hidden}
+.qbar i{display:block;height:100%;background:#ffd23f;transform-origin:left;animation:qT 3s linear forwards}
+.qhint{font-size:.75rem;opacity:.6}
+@keyframes qIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+@keyframes qT{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){.qmodal.on .qbox{animation:none}}
 .toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--chalk);color:var(--bg);padding:8px 14px;border-radius:12px;font-weight:700;z-index:80;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.on{opacity:1}
 footer{color:var(--muted);font-size:.85rem;text-align:center;padding:16px}
@@ -737,6 +748,9 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:16px}
     <div id="onlineList" class="plist"></div>
     <p class="muted" style="font-size:.88rem;margin-top:10px">Contano solo le persone che hanno fatto l'accesso e hanno il sito aperto.</p>
   </div>
+</div>
+<div class="modal qmodal" id="quoteModal" role="dialog" aria-modal="true" aria-label="Citazione del giorno">
+  <figure class="qbox"><div class="eyebrow">Pensiero del giorno</div><blockquote id="qText"></blockquote><figcaption id="qAuth"></figcaption><div class="qbar"><i id="qBar"></i></div><div class="qhint">tocca per continuare</div></figure>
 </div>
 <div class="modal" id="welcomeModal" role="dialog" aria-modal="true" aria-labelledby="wTitle">
   <div class="modal-box welcome">
@@ -1806,7 +1820,17 @@ async function rankCheck(){if(!AUTH)return;try{const me=await rpc('tl_me',{p_tok
 const QUOTES_BACK=['Ogni calcolo che fai oggi è un passo verso la velocità di domani.','La mente è un muscolo: oggi la alleniamo ancora un po\'.','Non serve essere geni: servono un metodo e un po\' di costanza. E tu li hai.','Trachtenberg inventò il suo metodo nel momento più buio della sua vita. Tu puoi impararlo in un pomeriggio.','Sbagliare fa parte del gioco: è così che il cervello trova la strada giusta.','Il record di ieri è il punto di partenza di oggi.','Piccoli progressi ogni giorno fanno grandi campioni.','Oggi è un ottimo giorno per battere il tuo record.','Più ti alleni, più i numeri diventano tuoi amici.','La velocità arriva da sola quando la precisione è di casa.','Chi torna ad allenarsi ha già vinto metà della sfida.','Ogni cifra al posto giusto è una piccola vittoria.'];
 const QUOTES_NEW=['Benvenuto in squadra! Da oggi le tabelline non ti servono più: ti basta un metodo.','Il primo passo è il più importante, e l\'hai appena fatto.','Tra qualche giorno farai a mente calcoli che oggi ti sembrano impossibili.'];
 function todayKey(){return dayKey(new Date())}
-async function showWelcome(kind){
+const CITAZIONI=[{"q": "L’istruzione è l’arma più potente che puoi usare per cambiare il mondo.", "a": "Nelson Mandela"}, {"q": "Il successo è la somma di piccoli sforzi, ripetuti giorno dopo giorno.", "a": "Robert Collier"}, {"q": "Non importa quanto vai piano, l’importante è non fermarsi.", "a": "Confucio"}, {"q": "Sembra sempre impossibile finché non viene fatto.", "a": "Nelson Mandela"}, {"q": "Il genio è l’1% di ispirazione e il 99% di sudore.", "a": "Thomas Edison"}, {"q": "Vivi come se dovessi morire domani. Impara come se dovessi vivere per sempre.", "a": "Mahatma Gandhi"}, {"q": "L’istruzione non è riempire un secchio, ma accendere un fuoco.", "a": "William Butler Yeats"}, {"q": "La mente non è un vaso da riempire, ma un fuoco da accendere.", "a": "Plutarco"}, {"q": "Chi smette di imparare è vecchio, che abbia venti o ottant’anni. Chi continua a imparare resta giovane.", "a": "Henry Ford"}, {"q": "Non studiare per sapere di più, ma per sapere meglio.", "a": "Seneca"}, {"q": "Non ho fallito. Ho solamente trovato 10.000 modi che non funzionano.", "a": "Thomas Edison"}, {"q": "Sbagliando s’impara.", "a": "Proverbio (spesso ripreso da Gianni Rodari)"}, {"q": "La differenza tra chi riesce e chi no non è la mancanza di forza o di conoscenza, ma piuttosto la mancanza di volontà.", "a": "Vince Lombardi"}, {"q": "Credi di farcela e sei già a metà strada.", "a": "Theodore Roosevelt"}, {"q": "Il futuro appartiene a coloro che credono nella bellezza dei propri sogni.", "a": "Eleanor Roosevelt"}, {"q": "Le radici dell’educazione sono amare, ma i frutti sono dolci.", "a": "Aristotele"}, {"q": "Un bambino, un insegnante, un libro e una penna possono cambiare il mondo.", "a": "Malala Yousafzai"}, {"q": "La cultura è l’unico bene dell’umanità che, diviso fra tutti, anziché diminuire diventa più grande.", "a": "Hans-Georg Gadamer"}, {"q": "La scuola dovrebbe sempre avere come fine che i giovani ne escano con personalità armoniose, non ridotti a specialisti.", "a": "Albert Einstein"}, {"q": "Fai della tua vita un sogno, e di un sogno, una realtà.", "a": "Antoine de Saint-Exupéry"}, {"q": "Fatti non foste a viver come bruti, ma per seguir virtute e canoscenza.", "a": "Dante Alighieri, Inferno XXVI"}, {"q": "Questo grandissimo libro che continuamente ci sta aperto innanzi agli occhi, io dico l’universo, è scritto in lingua matematica.", "a": "Galileo Galilei, Il Saggiatore"}, {"q": "Nessuna umana investigazione si può dimandare vera scienza, s’essa non passa per le matematiche dimostrazioni.", "a": "Leonardo da Vinci"}, {"q": "Non esiste una via regia per la geometria.", "a": "Euclide, secondo Proclo"}, {"q": "La bellezza della matematica si mostra solo ai suoi seguaci più pazienti.", "a": "Maryam Mirzakhani"}, {"q": "Prova ancora. Fallisci ancora. Fallisci meglio.", "a": "Samuel Beckett"}];
+function showQuote(done){
+  const m=$('quoteModal');let i;do{i=Math.floor(Math.random()*CITAZIONI.length)}while(CITAZIONI.length>1&&i===P.lastQuote);
+  P.lastQuote=i;save();const c=CITAZIONI[i];
+  $('qText').textContent='“'+c.q+'”';$('qAuth').textContent='— '+c.a;
+  const bar=$('qBar');bar.style.animation='none';void bar.offsetWidth;bar.style.animation='';
+  let shut=false;const close=()=>{if(shut)return;shut=true;clearTimeout(t);m.classList.remove('on');m.onclick=null;setTimeout(done,250)};
+  const t=setTimeout(close,3000);m.onclick=close;m.classList.add('on');
+}
+async function showWelcome(kind){showQuote(()=>showWelcome0(kind))}
+async function showWelcome0(kind){
   if(!AUTH)return;P.welcomeDay=todayKey();save();
   const u=AUTH.username,m=$('welcomeModal');
   $('wEyebrow').textContent=kind==='new'?'Benvenuto nel Trachtenberg Lab':'Bentornato nel laboratorio';
