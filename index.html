@@ -498,6 +498,9 @@ input[type=text],input[type=number]{background:#132824;border:1px solid var(--li
 @keyframes qIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
 @keyframes qT{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 @media (prefers-reduced-motion:reduce){.qmodal.on .qbox{animation:none}}
+.helpq{width:38px;padding-left:0;padding-right:0;border-radius:50%;font-weight:800;font-size:1.05rem;background:transparent;border:2px solid var(--yellow);color:var(--yellow)}
+#sTime.pen{animation:pen .7s ease}
+@keyframes pen{0%,100%{color:inherit}30%{color:var(--coral);transform:scale(1.25)}}
 .toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--chalk);color:var(--bg);padding:8px 14px;border-radius:12px;font-weight:700;z-index:80;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.on{opacity:1}
 footer{color:var(--muted);font-size:.85rem;text-align:center;padding:16px}
@@ -643,7 +646,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:16px}
     <div class="ans" id="sAns"></div>
     <div class="fb" id="sFb"></div>
     <div class="kp" id="soloKp"></div>
-    <div class="row" style="justify-content:center;margin-top:10px"><button class="btn sm ghost" id="sSkip">Passa</button><button class="btn sm ghost" id="sStop">Termina</button></div>
+    <div class="row" style="justify-content:center;margin-top:10px"><button class="btn sm helpq" id="sHelp" type="button" aria-label="Ricorda la regola (costa 5 secondi)" title="Ricorda la regola: costa 5 secondi">?</button><button class="btn sm ghost" id="sSkip">Passa</button><button class="btn sm ghost" id="sStop">Termina</button></div>
   </div>
 
   <div class="card stack" id="soloEnd" style="display:none"></div>
@@ -759,6 +762,13 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:16px}
     <blockquote id="wQuote"></blockquote>
     <div class="wstats" id="wStats"></div>
     <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="wSuggest" type="button"></button><button class="btn y" id="wGo" type="button">Si parte!</button></div>
+  </div>
+</div>
+<div class="modal" id="ruleModal" role="dialog" aria-modal="true" aria-labelledby="rmTitle">
+  <div class="modal-box">
+    <div class="row" style="justify-content:space-between;margin-bottom:6px"><div><div class="eyebrow">Promemoria · −5 secondi</div><h3 id="rmTitle"></h3></div><button class="iconbtn" id="rmClose" aria-label="Chiudi">Chiudi</button></div>
+    <div class="stack" id="rmBody" style="gap:8px"></div>
+    <p class="muted" style="font-size:.85rem;margin:10px 0 0">Il tempo è fermo mentre leggi. Tocca fuori o premi Esc per tornare alla sfida.</p>
   </div>
 </div>
 <div class="modal" id="glossModal" role="dialog" aria-modal="true" aria-labelledby="glossTitle">
@@ -1313,14 +1323,14 @@ function soloSetupRender(){
 }
 function soloBestTxt(){const b=P.best[bestKey()];$('soloBest').textContent=b?`Record (${DIFFLBL[SS.diff]}, ${SS.dur} s): ${b} punti`:'Nessun record ancora per questa combinazione'}
 $('soloStart').onclick=()=>{
-  Object.assign(S,{warned:false,wrongRun:0,stars0:Object.fromEntries(SS.techs.map(t=>[t,stars(t)])),running:true,rng:makeRng($('soloCode').value),code:$('soloCode').value.trim(),t:SS.dur,score:0,streak:0,ok:0,no:0,log:[],errs:[],last:performance.now()});
+  Object.assign(S,{warned:false,wrongRun:0,stars0:Object.fromEntries(SS.techs.map(t=>[t,stars(t)])),running:true,paused:false,helps:0,rng:makeRng($('soloCode').value),code:$('soloCode').value.trim(),t:SS.dur,score:0,streak:0,ok:0,no:0,log:[],errs:[],last:performance.now()});
   $('soloSetup').style.display='none';$('soloGame').style.display='';$('soloEnd').style.display='none';window.scrollTo(0,0);
   S.ans=new Answer($('sAns'),$('soloRtl').checked);
   keypad($('soloKp'),soloKey);keyTarget=soloKey;
   soloNext();S.int=setInterval(soloTick,200);soloHud();setFocus();
 };
 function soloNext(){const p=genProblem(S.rng,pick(S.rng,SS.techs),SS.diff);S.p=p;S.tech=p.t;S.m=p.m;S.n=p.n;S.t0=performance.now();$('sProb').innerHTML=pHTML(p);$('sProb').classList.toggle('isadd',p.t==='ad');S.ans.rtl=(p.t==='ds'||p.t==='df')?false:$('soloRtl').checked;S.ans.clear()}
-function soloTick(){const now=performance.now();S.t-=(now-S.last)/1000;S.last=now;if(!S.warned&&S.t<=10&&S.t>0){S.warned=true;cheer('Ultimi 10 secondi!',rnd(['Dai tutto!','Volata finale!','Ogni risposta conta!']),'push')}if(S.t<=0){S.t=0;soloEnd(false)}soloHud()}
+function soloTick(){const now=performance.now();if(S.paused){S.last=now;return}S.t-=(now-S.last)/1000;S.last=now;if(!S.warned&&S.t<=10&&S.t>0){S.warned=true;cheer('Ultimi 10 secondi!',rnd(['Dai tutto!','Volata finale!','Ogni risposta conta!']),'push')}if(S.t<=0){S.t=0;soloEnd(false)}soloHud()}
 function mult(){return 1+Math.min(S.streak,5)*.2}
 function soloHud(){$('sTime').textContent=Math.ceil(S.t);$('sScore').textContent=S.score;$('sCombo').textContent='×'+mult().toFixed(1);$('sBar').style.width=(S.t/SS.dur*100)+'%';$('sBar').style.background=S.t<10?'var(--coral)':''}
 function soloKey(k){
@@ -1342,9 +1352,18 @@ function soloKey(k){
   }
   soloHud();
 }
+function ruleHTML(m){const t=TECH[m];return `<p class="muted" style="margin:0">${t.d}. ${m==='ds'||m==='df'?'Si lavora da sinistra a destra, come nella divisione in colonna.':m==='ad'?'Ogni colonna si somma dall\'alto in basso; la somma finale si fa da destra a sinistra.':'Lavora da destra a sinistra, una cifra alla volta.'}</p>`+t.rules.map(r=>`<div class="rule"><b>${r[0]}</b><span>${r[1]}</span></div>`).join('')+([11,12,6,7,5].includes(m)?`<p class="note" style="margin:0">Alla prima cifra a destra non c'è il vicino: vale 0, quindi non aggiungi niente.</p>`:'')+(isTF(m)?`<p class="note" style="margin:0">Nella coppia più a destra la T non c'è: vale 0, quindi delle decine non aggiungi niente.</p>`:'')}
+function soloHelp(){if(!S.running||S.paused)return;S.paused=true;S.helps=(S.helps||0)+1;S.t=Math.max(0,S.t-5);soloHud();
+  const b=$('sTime');b.classList.remove('pen');void b.offsetWidth;b.classList.add('pen');beep(330,.12);
+  $('rmTitle').textContent='Regola: '+tLabel(S.tech);$('rmBody').innerHTML=ruleHTML(S.tech);
+  keyTarget=null;$('ruleModal').classList.add('on');$('rmClose').focus()}
+function soloHelpShut(){if(!$('ruleModal').classList.contains('on'))return;$('ruleModal').classList.remove('on');S.paused=false;S.last=performance.now();if(S.running){keyTarget=soloKey;$('sHelp').focus()}if(S.t<=0)soloEnd(false)}
+$('sHelp').onclick=soloHelp;$('rmClose').onclick=soloHelpShut;
+$('ruleModal').addEventListener('click',e=>{if(e.target.id==='ruleModal')soloHelpShut()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('ruleModal').classList.contains('on'))soloHelpShut()});
 $('sSkip').onclick=()=>{if(!S.running)return;S.streak=0;S.log.push(pServer(S.p,''));S.errs.push({n:S.n,m:S.m,t:S.tech,p:S.p,given:'(passato)'});$('sFb').className='fb';$('sFb').textContent='Passato';soloNext();soloHud()};
 $('sStop').onclick=()=>soloEnd(false);
-function soloEnd(silent){setTimeout(setFocus,0);
+function soloEnd(silent){setTimeout(setFocus,0);$('ruleModal').classList.remove('on');S.paused=false;
   clearInterval(S.int);if(!S.running)return;S.running=false;keyTarget=null;
   if(silent)return;
   const k=bestKey(),prevBest=P.best[k],rec=!P.best[k]||S.score>P.best[k];if(rec&&S.score>0)P.best[k]=S.score;
@@ -1362,6 +1381,7 @@ function soloEnd(silent){setTimeout(setFocus,0);
   const acc=S.ok+S.errs.length?Math.round(S.ok/(S.ok+S.errs.length)*100):0;
   e.innerHTML=`<div><div class="eyebrow">Tempo scaduto</div><h2>${S.score} punti${rec&&S.score>0?' · nuovo record!':''}</h2></div>
   <div class="grid g4"><div class="stat"><span class="muted">Giuste</span><b>${S.ok}</b></div><div class="stat"><span class="muted">Sbagliate o passate</span><b>${S.errs.length}</b></div><div class="stat"><span class="muted">Precisione</span><b>${acc}%</b></div><div class="stat"><span class="muted">XP guadagnati</span><b>+${xp}</b></div></div>
+  ${S.helps?`<p class="muted" style="margin:0">Promemoria della regola usati: ${S.helps} (−${S.helps*5} s)</p>`:''}
   <p class="muted" id="soloLb">${AUTH?'Salvo i punti in classifica…':'<a href="#account" style="color:var(--yellow)">Accedi</a> per mettere i tuoi punti in classifica.'}</p>
   <p class="coachline"><b>${esc(cm[0])}</b> ${esc(cm[1])}</p>
   ${S.code?`<p class="muted">Codice sfida: <b class="mono">${esc(S.code)}</b>. Confronta il punteggio con chi ha usato lo stesso codice.</p>`:''}
