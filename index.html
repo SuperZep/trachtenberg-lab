@@ -123,6 +123,14 @@ main{padding:18px 0 48px;padding-bottom:calc(60px + env(safe-area-inset-bottom))
 .chip{border:1px solid var(--line);background:var(--panel2);border-radius:99px;padding:5px 10px;font-weight:700;font-family:var(--f-mono)}
 .chip.on{background:var(--yellow);color:#1b1b1b;border-color:var(--yellow)}
 .chip.txt{font-family:var(--f-body)}
+.chipsel{appearance:none;-webkit-appearance:none;border:1px solid var(--line);background:var(--panel2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M1 3l4 4 4-4' fill='none' stroke='%23a8c1b7' stroke-width='1.8'/%3E%3C/svg%3E") no-repeat right 12px center;border-radius:99px;padding:6px 32px 6px 13px;font-weight:700;font-family:var(--f-body);color:var(--chalk);font-size:16px;cursor:pointer;max-width:100%}
+.chipsel.on{background-color:var(--yellow);color:#1b1b1b;border-color:var(--yellow);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M1 3l4 4 4-4' fill='none' stroke='%231b1b1b' stroke-width='1.8'/%3E%3C/svg%3E")}
+.chipsel option{color:#1b1b1b;background:#f3f1e7}
+#learnChips{display:block!important;overflow:visible!important;-webkit-mask-image:none!important;mask-image:none!important;margin-right:0!important;padding-right:0!important}
+#learnChips .famrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#learnChips .allwrap{display:none}
+@media (max-width:760px){#learnChips .famrow{display:none}#learnChips .allwrap{display:flex;align-items:center;gap:10px;width:100%;min-width:0}#learnChips .allwrap .allsel{flex:1 1 auto;min-width:0;width:0;padding:9px 34px 9px 14px;text-overflow:ellipsis}}
+#learnChips .chip,#learnChips .chipsel{flex:0 0 auto}
 .field{display:flex;flex-direction:column;gap:5px}
 .field label,.field .lbl{font-weight:700;font-size:.9rem;color:var(--muted)}
 input[type=text],input[type=number]{background:#132824;border:1px solid var(--line);border-radius:10px;padding:7px 10px;min-width:0}
@@ -1022,8 +1030,17 @@ window.addEventListener('hashchange',route);
 /* ================= IMPARA ================= */
 const L={m:11,n:null,sol:null,k:0,err:0,errTot:0,mode:'guided',timer:null,done:false};
 function learnOpen(){
-  $('learnChips').innerHTML=ORDER.map(m=>`<button class="chip ${m===L.m?'on':''}" data-m="${m}">${tLabel(m)}</button>`).join('');
-  $('learnChips').querySelectorAll('button').forEach(b=>b.onclick=()=>{L.m=pT(b.dataset.m);L.n=null;L.p=null;learnOpen();if(innerWidth<900){const c=document.querySelector('#labCard .work').style.display==='none'?$('workX'):document.querySelector('#labCard .work'),hh=document.querySelector('header').getBoundingClientRect().height;window.scrollTo({top:c.getBoundingClientRect().top+scrollY-hh-6,behavior:'smooth'})}});
+  const FAM=[{id:'mul',label:'×2…×12',name:'Moltiplicazioni ×2…×12',items:[2,3,4,5,6,7,8,9,11,12],ol:t=>'× '+t},{id:'dir',label:'Diretto',name:'Metodo diretto',items:['x2','x3','xn'],ol:t=>'Diretto '+({x2:'×2 cifre',x3:'×3 cifre',xn:'×N cifre'})[t]},
+    {id:'tf',label:'Due dita',name:'Metodo a due dita',items:['u1','u2','u3','un'],ol:t=>'2 dita '+({u1:'×1 cifra',u2:'×2 cifre',u3:'×3 cifre',un:'×N cifre'})[t]},{id:'ad',label:'Addizione',name:'Addizione',items:['ad'],ol:t=>'Addizione veloce'},
+    {id:'div',label:'Divisione',name:'Divisione',items:['ds','df'],ol:t=>({ds:'Div. semplice',df:'Div. veloce'})[t]}];
+  const sm=t=>{const n=stars(t);return n?' '+'★'.repeat(n):''};
+  $('learnChips').innerHTML=`<div class="famrow">${FAM.map(f=>{const act=f.items.includes(L.m);
+    if(f.items.length===1)return `<button class="chip txt ${act?'on':''}" data-m="${f.items[0]}" type="button">${f.label}</button>`;
+    return `<select class="chipsel ${act?'on':''}" data-f="${f.id}" aria-label="${f.name}"><option value="" disabled ${act?'':'selected'}>${f.label}</option>${f.items.map(t=>`<option value="${t}" ${L.m===t?'selected':''}>${f.ol(t)}</option>`).join('')}</select>`}).join('')}</div>
+    <label class="allwrap"><span class="muted">Regola</span><select class="chipsel on allsel" id="allRule" aria-label="Scegli la regola">${FAM.map(f=>`<optgroup label="${f.name}">${f.items.map(t=>`<option value="${t}" ${L.m===t?'selected':''}>${f.id==='mul'?'× '+t:tLabel(t)}${sm(t)}</option>`).join('')}</optgroup>`).join('')}</select></label>`;
+  const pickRule=v=>{L.m=pT(v);L.n=null;L.p=null;learnOpen();if(innerWidth<900){const c=document.querySelector('#labCard .work').style.display==='none'?$('workX'):document.querySelector('#labCard .work'),hh=document.querySelector('header').getBoundingClientRect().height;window.scrollTo({top:c.getBoundingClientRect().top+scrollY-hh-6,behavior:'smooth'})}};
+  $('learnChips').querySelectorAll('button').forEach(b=>b.onclick=()=>pickRule(b.dataset.m));
+  $('learnChips').querySelectorAll('select').forEach(sel=>sel.onchange=()=>{if(sel.value)pickRule(sel.value)});
   const t=TECH[L.m];
   $('ruleCard').innerHTML=`<div class="row" style="justify-content:space-between"><h2>${tLabel(L.m)}</h2>${starHTML(stars(L.m))}</div><p class="muted">${t.d}. ${L.m==='ds'||L.m==='df'?'Si lavora da sinistra a destra, come nella divisione in colonna.':L.m==='ad'?'Ogni colonna si somma dall\'alto in basso; la somma finale si fa da destra a sinistra.':'Lavora da destra a sinistra, una cifra alla volta.'}</p>`+t.rules.map(r=>`<div class="rule"><b>${r[0]}</b><span>${r[1]}</span></div>`).join('')+([11,12,6,7,5].includes(L.m)?`<p class="note" style="margin:0">Alla prima cifra a destra non c'è il vicino: vale 0, quindi non aggiungi niente.</p>`:'')+(isTF(L.m)?`<p class="note" style="margin:0">Nella coppia più a destra la T non c'è: vale 0, quindi delle decine non aggiungi niente.</p>`:'')+(isTF(L.m)?`<p class="muted" style="font-size:.9rem">Nell'esercizio: bordo pieno = cifra U, bordo tratteggiato = cifra T. Ogni colore è una cifra del moltiplicatore.</p>`:'')+`<button class="btn sm ghost" id="ruleToSolo" style="align-self:flex-start">Allenati in gara: ${tLabel(L.m)}</button>`;
   $('ruleToSolo').onclick=()=>{SS.techs=[L.m];location.hash='solo'};
