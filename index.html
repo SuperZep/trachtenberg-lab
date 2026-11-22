@@ -49,10 +49,25 @@ header{position:sticky;top:0;z-index:20;background:rgba(23,48,43,.94);-webkit-ba
 .hbar{display:flex;align-items:center;gap:14px;padding:10px 44px 10px 18px;padding-left:max(18px,env(safe-area-inset-left));max-width:1100px;margin:0 auto}
 .logo{font-family:var(--f-display);font-weight:800;font-size:1.25rem;display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--chalk);white-space:nowrap}
 .logo b{background:var(--yellow);color:#1b1b1b;border-radius:8px;padding:0 7px;font-family:var(--f-mono);font-size:1rem}
-nav{display:flex;gap:4px;overflow-x:auto;flex:1;scrollbar-width:none}
+nav{display:flex;gap:4px;flex:1;align-items:center}
 nav a{color:var(--muted);text-decoration:none;padding:7px 12px;border-radius:999px;white-space:nowrap;font-weight:700;font-size:.95rem}
 nav a:hover{color:var(--chalk);background:var(--panel)}
 nav a.on{background:var(--chalk);color:var(--bg)}
+nav a{display:inline-flex;align-items:center;gap:6px}
+.dd{position:relative}
+.ddm{position:absolute;top:100%;left:0;min-width:210px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px;box-shadow:0 16px 40px rgba(0,0,0,.4);display:none;flex-direction:column;gap:2px;z-index:25}
+.ddm a{border-radius:8px;color:var(--chalk);padding:9px 12px}
+.ddm a:hover{background:var(--panel2)}
+.dd:hover .ddm,.dd:focus-within .ddm{display:flex}
+.dd::after{content:"";position:absolute;left:0;right:0;top:100%;height:8px}
+.caret{opacity:.7}
+.tabbar{display:none}
+@media (max-width:1200px){#lvlname,.xpbar{display:none}}
+@media (max-width:1000px){.accname,#xptxt{display:none}.iconbtn.acc{padding:6px 8px;line-height:0}.logo .lab{display:none}nav a{padding:7px 10px}.hbar{gap:10px}}
+.seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px;margin-bottom:14px}
+.seg a{padding:8px 16px;border-radius:9px;text-decoration:none;color:var(--muted);font-weight:700}
+.seg a.on{background:var(--yellow);color:#1b1b1b}
+.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
 .xpchip{display:flex;align-items:center;gap:8px;white-space:nowrap;font-size:.85rem}
 .xpbar{width:64px;height:8px;border-radius:99px;background:var(--panel2);overflow:hidden}
 .xpbar i{display:block;height:100%;background:var(--yellow)}
@@ -392,6 +407,21 @@ input[type=text],input[type=number]{background:#132824;border:1px solid var(--li
 .crow .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .crow.me .n{color:var(--ok);font-weight:700}
 @media (max-width:420px){.medtab .mh,.medtab .mr{grid-template-columns:34px 1fr 30px 30px 30px;padding:7px 8px;gap:6px}.mgrid{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:800px){
+  nav#nav{display:none}
+  .xpchip{margin-left:auto}
+  .hbar{flex-wrap:nowrap;padding-top:8px;padding-bottom:8px}
+  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(23,48,43,.97);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-top:1px solid var(--line);
+    padding:5px max(4px,env(safe-area-inset-right)) calc(5px + env(safe-area-inset-bottom)) max(4px,env(safe-area-inset-left));transition:transform .25s}
+  .tabbar a{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);text-decoration:none;font-size:.68rem;font-weight:700;padding:5px 0 3px;border-radius:12px;min-height:48px;justify-content:center}
+  nav.tabbar a:hover{background:none}
+  nav.tabbar a.on{color:var(--yellow);background:rgba(255,210,63,.12)}
+  .tabbar a.on svg{filter:drop-shadow(0 0 6px rgba(255,210,63,.45))}
+  body.focus .tabbar{transform:translateY(115%)}
+  footer{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+  body:not(.focus) .toast{bottom:calc(84px + env(safe-area-inset-bottom))}
+  .seg{display:flex}.seg a{flex:1;text-align:center}
+}
 .toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--chalk);color:var(--bg);padding:10px 18px;border-radius:12px;font-weight:700;z-index:80;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.on{opacity:1}
 footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
@@ -404,17 +434,13 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
 <div class="ribbon" aria-label="Versione 2.0"><span>v.2.0</span></div>
 <header>
   <div class="hbar">
-    <a class="logo" href="#home"><b>×11</b> Trachtenberg<span class="lab">&nbsp;Lab</span></a>
-    <nav id="nav">
-      <a href="#home" data-v="home">Home</a>
-      <a href="#impara" data-v="impara">Impara</a>
-      <a href="#solo" data-v="solo">Sfida solo</a>
-      <a href="#duello" data-v="duello">Duello e squadre</a>
-      <a href="#escape" data-v="escape">Escape room</a>
-      <a href="#stanza" data-v="stanza">Stanza live</a>
-      <a href="#gioca" data-v="gioca">Entra con PIN</a>
-      <a href="#classifica" data-v="classifica">Classifica</a>
-      <a href="#medagliere" data-v="medagliere">Medagliere</a>
+    <a class="logo" href="#home"><b>×11</b> Trachtenberg<span class="lab">Lab</span></a>
+    <nav id="nav" aria-label="Menu principale">
+      <a href="#home" data-s="home">Home</a>
+      <a href="#impara" data-s="impara">Impara</a>
+      <div class="dd"><a href="#giochi" data-s="giochi" aria-haspopup="true">Gioca <svg class="caret" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1 3l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></a><div class="ddm"><a href="#solo">Sfida solo</a><a href="#duello">Duello e squadre</a><a href="#escape">Escape room</a></div></div>
+      <div class="dd"><a href="#gioca" data-s="live" aria-haspopup="true">Live <svg class="caret" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1 3l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></a><div class="ddm"><a href="#gioca">Entra con PIN</a><a href="#stanza">Crea una stanza (prof)</a></div></div>
+      <div class="dd"><a href="#classifica" data-s="classifiche" aria-haspopup="true">Classifiche <svg class="caret" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1 3l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></a><div class="ddm"><a href="#classifica">Classifica</a><a href="#medagliere">Medagliere</a></div></div>
     </nav>
     <div class="xpchip"><span id="lvlname">Apprendista</span><span class="xpbar"><i id="xpfill" style="width:0%"></i></span><span class="mono" id="xptxt">0 XP</span>
       <button class="iconbtn onl" id="onlineBtn" type="button" aria-haspopup="dialog" title="Persone collegate ora" style="display:none"><i class="dot" aria-hidden="true"></i><span id="onlineN">0</span></button><a class="iconbtn acc" id="accBtn" href="#account" style="text-decoration:none;color:inherit">Accedi</a><button class="iconbtn snd" id="sndbtn" aria-pressed="true" title="Suoni attivi" aria-label="Suoni attivi: tocca per disattivarli"></button></div>
@@ -452,7 +478,8 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
     <a class="card mode" href="#solo"><span class="tag">1 giocatore</span><h3>Sfida solo</h3><p class="muted">60, 90 o 120 secondi. Le risposte giuste di fila fanno salire il moltiplicatore di punti.</p><span class="go">Batti il tuo record →</span></a>
     <a class="card mode" href="#duello"><span class="tag">2 giocatori o 2 squadre</span><h3>Duello e squadre</h3><p class="muted">Testa a testa sullo stesso schermo, oppure a turni sulla LIM con il «rubapalla».</p><span class="go">Sfida qualcuno →</span></a>
     <a class="card mode danger" href="#escape"><span class="tag">6 stanze · 15 minuti</span><h3>Fuga dal Laboratorio T</h3><p class="muted">Ogni porta si apre solo con il calcolo giusto. Ogni errore costa ossigeno.</p><span class="go">Entra, se hai coraggio →</span></a>
-    <a class="card mode" href="#stanza"><span class="tag">Tutta la classe · PIN e QR</span><h3>Stanza live</h3><p class="muted">Come Kahoot o Wayground: il prof crea la stanza sulla LIM, gli studenti entrano dal telefono e la classifica si aggiorna in tempo reale.</p><span class="go">Crea una stanza →</span></a>
+    <a class="card mode" href="#gioca"><span class="tag">Tutta la classe · PIN e QR</span><h3>Live</h3><p class="muted">Come Kahoot o Wayground: il prof crea la stanza sulla LIM, gli studenti entrano dal telefono con il PIN e la classifica si aggiorna in tempo reale.</p><span class="go">Entra con il PIN →</span></a>
+    <a class="card mode" href="#classifica"><span class="tag">Tutti gli iscritti</span><h3>Classifiche e medagliere</h3><p class="muted">Una classifica per ogni tipo di calcolo, la classifica generale, le medaglie di ogni sfida e il Grand Slam.</p><span class="go">Guarda chi è in testa →</span></a>
   </div>
 
   <div class="card stack">
@@ -562,6 +589,17 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
   </div>
 </section>
 
+<!-- GIOCA (hub) -->
+<section class="view" id="view-giochi"><div class="stack">
+  <div><div class="eyebrow">Scegli come giocare</div><h2>Gioca</h2></div>
+  <div class="grid g3">
+    <a class="card mode" href="#solo"><span class="tag">1 giocatore</span><h3>Sfida solo</h3><p class="muted">60, 90 o 120 secondi contro il tempo. Le risposte giuste di fila fanno salire il moltiplicatore di punti.</p><span class="muted" id="hubSolo"></span><span class="go">Gioca →</span></a>
+    <a class="card mode" href="#duello"><span class="tag">2 giocatori o 2 squadre</span><h3>Duello e squadre</h3><p class="muted">Testa a testa sullo stesso schermo, oppure a turni sulla LIM con il «rubapalla».</p><span class="go">Sfida qualcuno →</span></a>
+    <a class="card mode danger" href="#escape"><span class="tag">6 stanze · 15 minuti</span><h3>Fuga dal Laboratorio T</h3><p class="muted">Ogni porta si apre solo con il calcolo giusto. Ogni errore costa ossigeno.</p><span class="muted" id="hubEsc"></span><span class="go">Entra, se hai coraggio →</span></a>
+  </div>
+  <div class="card row" style="justify-content:space-between"><span>Vuoi giocare con tutta la classe?</span><a class="btn sm ghost" href="#gioca">Vai a Live</a></div>
+</div></section>
+
 <!-- STANZA (docente) -->
 <section class="view" id="view-stanza">
   <div class="card stack">
@@ -586,7 +624,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
 <section class="view" id="view-account"><div id="accBox" class="gwrap" style="max-width:640px"></div></section>
 
 <!-- CLASSIFICA -->
-<section class="view" id="view-classifica"><div class="card stack">
+<section class="view" id="view-classifica"><div class="seg" role="tablist"><a href="#classifica" class="on" role="tab">Classifica</a><a href="#medagliere" class="" role="tab">Medagliere</a></div><div class="card stack">
   <div><div class="eyebrow">Tutti gli iscritti</div><h2 id="lbTitle">Classifica generale</h2><p class="muted" id="lbSub"></p></div>
   <div class="chips" id="lbChips"></div>
   <div id="lbMe"></div>
@@ -594,7 +632,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
 </div></section>
 
 <!-- MEDAGLIERE -->
-<section class="view" id="view-medagliere"><div id="medBox" class="stack"></div></section>
+<section class="view" id="view-medagliere"><div class="seg" role="tablist"><a href="#classifica" class="" role="tab">Classifica</a><a href="#medagliere" class="on" role="tab">Medagliere</a></div><div id="medBox" class="stack"></div></section>
 
 <!-- GIOCA (studente) -->
 <section class="view" id="view-gioca"><div id="gioca" class="gwrap"></div></section>
@@ -606,6 +644,13 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
 </main>
 <footer>Trachtenberg Lab · per le prime classi · i progressi restano solo su questo dispositivo</footer>
 
+<nav class="tabbar" id="tabbar" aria-label="Menu principale">
+  <a href="#home" data-s="home"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span>Home</span></a>
+  <a href="#impara" data-s="impara"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h5v16H6a2 2 0 0 0-2 2z"/><path d="M20 5a2 2 0 0 0-2-2h-5v16h5a2 2 0 0 1 2 2z"/></svg><span>Impara</span></a>
+  <a href="#giochi" data-s="giochi"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="7" width="19" height="11" rx="5"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle cx="15.5" cy="11.5" r="1.2" fill="currentColor"/><circle cx="18" cy="14" r="1.2" fill="currentColor"/></svg><span>Gioca</span></a>
+  <a href="#gioca" data-s="live"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M8 8a5.6 5.6 0 0 0 0 8M16 8a5.6 5.6 0 0 1 0 8M5 5a9.9 9.9 0 0 0 0 14M19 5a9.9 9.9 0 0 1 0 14"/></svg><span>Live</span></a>
+  <a href="#classifica" data-s="classifiche"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21V9h6v12M3 21v-7h6M15 21v-9h6v9M2 21h20"/></svg><span>Classifiche</span></a>
+</nav>
 <div class="overlay" id="duelOv"></div>
 <div class="overlay" id="hostOv"></div>
 <div class="toast" id="toast"></div>
@@ -849,14 +894,18 @@ class Answer{constructor(el,rtl){this.el=el;this.rtl=rtl;this.v='';this.render()
   val(){return this.v.replace(/^0+(?=\d)/,'')}}
 
 /* ================= ROUTING ================= */
-const VIEWS=['home','impara','solo','duello','escape','stanza','gioca','account','classifica','medagliere'];
+const VIEWS=['home','impara','giochi','solo','duello','escape','stanza','gioca','account','classifica','medagliere'];
+const SECT={home:'home',impara:'impara',giochi:'giochi',solo:'giochi',duello:'giochi',escape:'giochi',gioca:'live',stanza:'live',classifica:'classifiche',medagliere:'classifiche'};
+function setFocus(){const h=location.hash;document.body.classList.toggle('focus',(S.running&&h==='#solo')||(E.phase==='play'&&h==='#escape'))}
 function route(){
   const v=VIEWS.includes(location.hash.slice(1))?location.hash.slice(1):'home';
   if(v!=='solo'&&S.running)soloEnd(true);
   if(v!=='impara'&&L.playing)playStop();
   if(v!=='escape')escPause();else escResume();
   document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on',s.id==='view-'+v));
-  document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('[data-s]').forEach(a=>{a.classList.toggle('on',a.dataset.s===SECT[v]);if(a.dataset.s===SECT[v])a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  if(v==='giochi')giochiRender();
+  setFocus();
   keyTarget=null;
   if(v==='home')renderHomeTech();
   if(v==='impara')learnOpen();
@@ -1018,7 +1067,7 @@ $('soloStart').onclick=()=>{
   $('soloSetup').style.display='none';$('soloGame').style.display='';$('soloEnd').style.display='none';window.scrollTo(0,0);
   S.ans=new Answer($('sAns'),$('soloRtl').checked);
   keypad($('soloKp'),soloKey);keyTarget=soloKey;
-  soloNext();S.int=setInterval(soloTick,200);soloHud();
+  soloNext();S.int=setInterval(soloTick,200);soloHud();setFocus();
 };
 function soloNext(){const p=genProblem(S.rng,pick(S.rng,SS.techs),SS.diff);S.tech=p.t;S.m=p.m;S.n=p.n;S.t0=performance.now();$('sProb').innerHTML=probHTML(S.n,S.m);S.ans.clear()}
 function soloTick(){const now=performance.now();S.t-=(now-S.last)/1000;S.last=now;if(!S.warned&&S.t<=10&&S.t>0){S.warned=true;cheer('Ultimi 10 secondi!',rnd(['Dai tutto!','Volata finale!','Ogni risposta conta!']),'push')}if(S.t<=0){S.t=0;soloEnd(false)}soloHud()}
@@ -1045,7 +1094,7 @@ function soloKey(k){
 }
 $('sSkip').onclick=()=>{if(!S.running)return;S.streak=0;S.log.push({n:S.n,m:S.m,t:String(S.tech),v:''});S.errs.push({n:S.n,m:S.m,t:S.tech,given:'(passato)'});$('sFb').className='fb';$('sFb').textContent='Passato';soloNext();soloHud()};
 $('sStop').onclick=()=>soloEnd(false);
-function soloEnd(silent){
+function soloEnd(silent){setTimeout(setFocus,0);
   clearInterval(S.int);if(!S.running)return;S.running=false;keyTarget=null;
   if(silent)return;
   const k=bestKey(),prevBest=P.best[k],rec=!P.best[k]||S.score>P.best[k];if(rec&&S.score>0)P.best[k]=S.score;
@@ -1175,7 +1224,7 @@ function escRender(){
   escRoomRender();
 }
 function mmss(t){t=Math.max(0,Math.ceil(t));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')}
-function escStart(){
+function escStart(){setTimeout(setFocus,0);
   E.team=$('escTeam').value.trim();E.rtl=$('escRtl').checked;E.code=$('escCode').value.trim();
   E.rng=makeRng(E.code?E.code+'|'+E.diff:'');Object.assign(E,{warned:false,phase:'play',t:900,room:0,wrong:0,hints:0,paused:false,last:performance.now(),won:false});
   E.rooms=ROOMS.map(R=>escPrepare(R));
@@ -1252,7 +1301,7 @@ function escWires(rm){
 function escNextRoom(){
   setTimeout(()=>{if(E.phase!=='play')return;if(E.room>=ROOMS.length-1)return escFinish(true);E.room++;if(E.room===3)cheer('Sei a metà strada!',rnd(['Tre stanze superate: il laboratorio non ti fermerà.','Metà fatta, continua così!']),'ok');else if(E.room===5)cheer('Ultima stanza!','Ancora uno sforzo e sei fuori.','push');else cheer('Porta aperta!',rnd(['Avanti così.','Calcolo perfetto.','Il Prof. T sarebbe fiero.']),'ok');beep(440,.15);setTimeout(()=>beep(660,.2),120);escRender();window.scrollTo(0,0)},700);
 }
-function escFinish(won,quit){
+function escFinish(won,quit){setTimeout(setFocus,0);
   clearInterval(E.int);E.phase='end';E.won=won;E.quit=!!quit;keyTarget=null;
   const prevEsc=P.esc;
   if(won){E.starsN=E.t>=360?3:E.t>=180?2:1;addXP(30+E.starsN*10);if(!P.esc||E.t>P.esc){P.esc=Math.ceil(E.t);save()}
@@ -1411,7 +1460,8 @@ function gJoinForm(msg){
   $('gioca').innerHTML=`<div class="card stack"><div><div class="eyebrow">Stanza live</div><h2>Entra con il PIN</h2><p class="muted">Il PIN di 6 cifre è sulla LIM.</p></div>
   <div class="field"><label for="jPin">PIN della stanza</label><input id="jPin" type="text" inputmode="numeric" maxlength="7" autocomplete="off" class="pininput" value="${prefPin}"></div>
   <div class="field"><label for="jNick">Il tuo nome in classifica</label><input id="jNick" type="text" maxlength="16" autocomplete="off" placeholder="es. Giulia B." ${AUTH?`value="${esc(AUTH.username)}" disabled`:''}>${AUTH?'<span class="muted" style="font-size:.85rem">Entri con il tuo account: i punti vanno anche nella classifica.</span>':'<span class="muted" style="font-size:.85rem"><a href="#account" style="color:var(--yellow)">Accedi</a> se vuoi che i punti vadano in classifica.</span>'}</div>
-  <button class="btn y" id="jGo">Entra nella stanza</button><p class="fb no" id="jMsg">${esc(msg||'')}</p></div>`;
+  <button class="btn y" id="jGo">Entra nella stanza</button><p class="fb no" id="jMsg">${esc(msg||'')}</p></div>
+  <p class="muted" style="text-align:center;margin-top:14px;font-size:.92rem">Sei il prof? <a href="#stanza" style="color:var(--yellow);font-weight:700">Crea una stanza →</a></p>`;
   const go=()=>gJoin();$('jGo').onclick=go;['jPin','jNick'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter')go()}));
   (prefPin?$('jNick'):$('jPin')).focus();
 }
@@ -1643,6 +1693,7 @@ async function medalCheck(silent){if(!AUTH)return;try{const r=await rpc('tl_meda
   up.slice(0,2).forEach(d=>{const a=now[d];cheer(`Medaglia ${a===1?"d'oro":a===2?"d'argento":'di bronzo'}: ${dLabel(d)}!`,a===1?'Sei il campione di questa sfida.':"Continua così e punta all'oro!",'gold',a===1)});
   const lost=Object.keys(prev).find(d=>!now[d]||now[d]>prev[d]);if(lost&&!up.length)cheer(`Ti hanno superato: ${dLabel(lost)}`,'Riconquista la tua medaglia!','push')}catch(e){}}
 
+function giochiRender(){const b=Object.values(P.best||{});$('hubSolo').textContent=b.length?'Il tuo record: '+Math.max(...b)+' punti':'';$('hubEsc').textContent=P.esc?'Miglior fuga: '+mmss(P.esc)+' rimasti':''}
 /* ================= TOP 10 IN HOME ================= */
 function medal(n){const c={1:'#ffd23f',2:'#c9d3d0',3:'#d89a62'}[n];if(!c)return `<span class="pos">${n}</span>`;
   return `<span class="pos" aria-label="${n}° posto"><svg width="28" height="32" viewBox="0 0 28 32" aria-hidden="true"><path d="M7 0h6l3 11h-6z" fill="#62dbe3"/><path d="M21 0h-6l-3 11h6z" fill="#ff6b5b"/><circle cx="14" cy="21" r="10" fill="${c}" stroke="rgba(0,0,0,.3)" stroke-width="2"/><text x="14" y="25.5" text-anchor="middle" font-size="12" font-weight="800" fill="#1b1b1b" font-family="JetBrains Mono, monospace">${n}</text></svg></span>`}
