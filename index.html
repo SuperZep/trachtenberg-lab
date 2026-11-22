@@ -414,6 +414,7 @@ input[type=text],input[type=number]{background:#132824;border:1px solid var(--li
   .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(23,48,43,.97);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-top:1px solid var(--line);
     padding:5px max(4px,env(safe-area-inset-right)) calc(5px + env(safe-area-inset-bottom)) max(4px,env(safe-area-inset-left));transition:transform .25s}
   .tabbar a{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);text-decoration:none;font-size:.68rem;font-weight:700;padding:5px 0 3px;border-radius:12px;min-height:48px;justify-content:center}
+  nav.tabbar{margin:0;order:initial;flex-basis:auto}
   nav.tabbar a:hover{background:none}
   nav.tabbar a.on{color:var(--yellow);background:rgba(255,210,63,.12)}
   .tabbar a.on svg{filter:drop-shadow(0 0 6px rgba(255,210,63,.45))}
