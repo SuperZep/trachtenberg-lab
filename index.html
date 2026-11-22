@@ -40,7 +40,7 @@ button{cursor:pointer}
 :focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 .muted{color:var(--muted)}
-.wrap{max-width:1100px;margin:0 auto;padding:0 14px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 14px}
 
 /* header */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -467,6 +467,26 @@ input[type=text],input[type=number]{background:#132824;border:1px solid var(--li
 .frow b:nth-child(2){color:var(--yellow)}
 .infobar .pill{font-size:.88rem}
 @media (max-width:600px){.infobar{gap:5px;margin:6px 0}.infobar .pill{padding:2px 9px;font-size:.84rem}}
+/* PC: tastiera accanto ai numeri */
+@media (min-width:1100px){
+  #labCard{display:grid;grid-template-columns:minmax(0,1fr) 290px;column-gap:20px;row-gap:8px;align-items:start}
+  #labCard>.row{grid-column:1 / -1}
+  #labCard>.work,#labCard>#workX{grid-column:1;grid-row:2}
+  #labCard>#infoBar{grid-column:1;grid-row:3}
+  #labCard>#stepNote{grid-column:1;grid-row:4}
+  #labCard>#say{grid-column:1;grid-row:5}
+  #labCard>.logwrap{grid-column:1;grid-row:6}
+  #labCard>.padcol{grid-column:2;grid-row:2 / span 5;align-self:start;position:sticky;top:70px}
+  #labCard #learnInput .kp{max-width:290px}
+}
+@media (min-width:1100px) and (max-height:900px){
+  .workx .cell{aspect-ratio:auto;height:40px;font-size:1.35rem}.workx .cell.small{height:30px;font-size:1.05rem}
+  #view-impara h2{font-size:1.7rem}
+}
+@media (min-width:900px){
+  #escPuzzle.withkp{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:16px;align-items:start}
+  #escPuzzle.withkp #escKp{max-width:280px}
+}
 .toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--chalk);color:var(--bg);padding:8px 14px;border-radius:12px;font-weight:700;z-index:80;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.on{opacity:1}
 footer{color:var(--muted);font-size:.85rem;text-align:center;padding:16px}
@@ -476,7 +496,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:16px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
-<div class="ribbon" aria-label="Versione 2.0"><span>v.2.0</span></div>
+<div class="ribbon" aria-label="Versione 3.0"><span>v. 3.0</span></div>
 <header>
   <div class="hbar">
     <a class="logo" href="#home"><b>×11</b> Trachtenberg<span class="lab">Lab</span></a>
@@ -564,6 +584,7 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:16px}
         <div class="workx" id="workX" style="display:none"></div>
         <div class="work"><div id="rowTop" class="cells"></div><div class="times" id="multLbl"></div><div class="rline"></div><div id="rowBot" class="cells"></div></div>
         <div class="infobar" id="infoBar"></div>
+        <div class="padcol">
         <div id="learnInput"><div class="ans" id="learnAns" style="display:none"></div><div class="kp" id="learnKp"></div></div>
         <div class="stepnav" id="stepNav">
           <button class="btn sm ghost" id="stBack" type="button" title="Torna al passo precedente (freccia sinistra)"></button>
@@ -571,9 +592,10 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:16px}
           <button class="btn sm y" id="stPlay" type="button" title="Pausa o riprendi l'animazione (barra spaziatrice)"></button>
           <button class="btn sm ghost" id="stFwd" type="button" title="Vai al passo successivo (freccia destra)"></button>
         </div>
+        </div>
         <p class="note" id="stepNote" style="text-align:center"></p>
         <div class="say" id="say"></div>
-        <div><div class="eyebrow" style="margin-bottom:5px">Passaggi fatti</div><div class="log" id="log"></div></div>
+        <div class="logwrap"><div class="eyebrow" style="margin-bottom:5px">Passaggi fatti</div><div class="log" id="log"></div></div>
       </div>
     </div>
     <div class="card">
@@ -1493,7 +1515,7 @@ function escLocks(rm){
       const nx=rm.locks.findIndex(x=>!x.solved);
       if(nx>=0){if(rm.locks[nx].chain)rm.locks[nx].n=l.n*l.m;rm.act=nx;paint()}else{paint();escNextRoom()}}
     else{l.box.clear();shake($('lk'+rm.act));escPenalty(30,'Codice errato: −30 secondi')}};
-  keypad($('escKp'),onKey);keyTarget=onKey;paint();
+  keypad($('escKp'),onKey);keyTarget=onKey;pz.classList.add('withkp');paint();
 }
 function escMatch(rm){
   const pz=$('escPuzzle');keyTarget=null;
