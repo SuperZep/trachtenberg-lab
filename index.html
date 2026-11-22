@@ -529,6 +529,21 @@ input[type=text],input[type=number]{background:#132824;border:1px solid var(--li
 details.why{background:#132824;border-radius:12px;padding:8px 11px}
 details.why summary{cursor:pointer;font-weight:700;color:var(--yellow)}
 details.why p{margin:6px 0 0;font-size:.95rem}
+.prob sup.sq{font-size:.5em;vertical-align:super;margin-left:2px}
+.prob .rad{border-top:.08em solid var(--chalk);padding:0 .1em;margin-left:.05em}
+.sqx .cell.blk{font-size:clamp(.8rem,3.4vw,1.05rem);color:var(--chalk)}
+.sqx .cells{justify-content:center}
+.rtop{display:flex;align-items:flex-end;justify-content:center;gap:4px}
+.rsym{font-family:var(--f-mono);font-size:clamp(2rem,8vw,2.8rem);color:var(--yellow);line-height:1}
+.rgs{display:flex;gap:10px;border-top:3px solid rgba(243,241,231,.7);padding-top:5px}
+.rg{display:flex;gap:3px;border-radius:10px;padding:2px}
+.rg .cell{width:clamp(30px,9vw,44px);height:clamp(36px,10vw,50px);aspect-ratio:auto}
+.rg.on{outline:2px solid var(--yellow);background:rgba(255,210,63,.08)}
+.rg.on .cell{color:var(--yellow)}
+.rg.used .cell{color:var(--muted);opacity:.6}
+.rres{display:flex;align-items:center;justify-content:center;gap:10px}
+.rres .cell{width:clamp(30px,9vw,44px);height:clamp(36px,10vw,50px);aspect-ratio:auto}
+.frow.rrow{grid-template-columns:repeat(5,minmax(52px,1fr))!important}
 .toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--chalk);color:var(--bg);padding:8px 14px;border-radius:12px;font-weight:700;z-index:80;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.on{opacity:1}
 footer{color:var(--muted);font-size:.85rem;text-align:center;padding:16px}
@@ -811,6 +826,8 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;padding:16px}
             <dt>Abbassare</dt><dd>Nelle divisioni: scrivere accanto al resto la cifra successiva del dividendo.</dd>
             <dt>NT e U</dt><dd>Nella divisione veloce: NT toglie la parte delle decine, U quella delle unità.</dd>
             <dt>Prova</dt><dd>Somma le cifre di un numero finché ne resta una: 153 → 1+5+3 = 9.</dd>
+            <dt>Doppio prodotto</dt><dd>Nei quadrati e nelle radici: due volte il prodotto di due cifre, per esempio 2 × 4 × 3 = 24.</dd>
+            <dt>Blocco</dt><dd>Nei quadrati: il numero che va in una colonna prima di comprimere con il riporto.</dd>
             <dt>Zero davanti</dt><dd>Immagina sempre uno 0 a sinistra del numero: lì nasce l'ultima cifra del risultato.</dd>
           </dl>
   </div>
@@ -905,7 +922,7 @@ function stepText(st){
 }
 
 /* ================= DATI DELLE REGOLE ================= */
-const ORDER=[11,12,6,7,5,9,8,4,3,2,'x2','x3','xn','u1','u2','u3','un','ad','ds','df'];
+const ORDER=[11,12,6,7,5,9,8,4,3,2,'x2','x3','xn','u1','u2','u3','un','ad','ds','df','q2','rq'];
 const TECH={
  11:{d:'Somma il vicino',rules:[['Ogni passo','cifra + vicino']]},
  12:{d:'Raddoppia e somma il vicino',rules:[['Ogni passo','doppio della cifra + vicino']]},
@@ -926,11 +943,13 @@ const TECH={
  ad:{d:'Regola dell\'11: in colonna non contare mai oltre 11',rules:[['In ogni colonna','scendi sommando le cifre; quando il totale arriva a 11 o più, togli 11 e fai una spunta ✓'],['Scorciatoia','da 11 a 19 basta togliere 1 alle unità: 16 diventa 5, 11 diventa 0'],['Sotto ogni colonna','scrivi il totale rimasto e il numero di spunte'],['Somma a L','per ogni posto: totale + spunte della colonna + spunte della colonna a destra, più il riporto']]},
  ds:{d:'Tabella dei multipli e sottrazioni',rules:[['Prima','costruisci la tabella del divisore: ×1, ×2 … ×10, aggiungendo ogni volta il divisore'],['Prova','somma le cifre di ogni multiplo finché ne resta una: deve tornare con la prova della riga sopra + la prova del divisore; ×10 è il divisore con uno zero'],['Inizio','prendi tante cifre del dividendo quante servono per arrivare almeno al divisore'],['Ogni passo','cerca nella tabella il multiplo più grande che ci sta: la sua etichetta è la cifra del risultato'],['Poi','sottrai, abbassa la cifra successiva e ripeti; quello che avanza alla fine è il resto']]},
  df:{d:'Prodotti NT e U, divisore a 2 cifre',rules:[['Il divisore','prima cifra in giallo, seconda in azzurro; se l\'azzurra è 8 o 9, dividi per la gialla + 1'],['Cifra del risultato','dividi il resto P per la gialla (o per la gialla + 1) e tieni solo la parte intera'],['NT, le decine','gialla × cifra + le decine di (azzurra × cifra): toglilo da P e abbassa la cifra successiva'],['U, le unità','le unità di (azzurra × cifra): togli anche queste e ottieni il nuovo resto P'],['Correzioni','se non riesci a togliere, la cifra è troppo grande: una in meno; se il nuovo P è grande quanto il divisore o di più, è troppo piccola: una in più'],['Fine','l\'ultimo P è il resto']]},
+ q2:{d:'Quadrato di un numero: blocchi e riporti',rules:[['Blocchi','per 2 cifre (es. 43): quadrato delle unità 3×3 = 9, doppio prodotto 2×4×3 = 24, quadrato delle decine 4×4 = 16'],['3 cifre','per abc i blocchi sono 5: c², 2·b·c, b² + 2·a·c, 2·a·b, a²'],['Comprimi','da destra: blocco + riporto, scrivi le unità e porta le decine al blocco dopo; l\'ultimo blocco si scrive tutto'],['Scorciatoia: finisce con 5','35² → 3 × 4 = 12, poi attacca 25: 1225'],['Scorciatoia: decine 5','56² → 25 + 6 = 31, poi 6 × 6 = 36: 3136']]},
+ rq:{d:'Radice quadrata: gruppi di due cifre',rules:[['Gruppi','dividi il numero in gruppi di 2 cifre partendo da destra: ogni gruppo dà una cifra della radice'],['Prima cifra','la cifra più grande il cui quadrato non supera il primo gruppo; poi togli il quadrato'],['Cifra dopo','abbassa il gruppo successivo accanto al resto; togli l\'ultima cifra e dividi per il doppio della radice trovata (massimo 9)'],['Controllo','togli il doppio prodotto (2 × radice × cifra, con uno zero in fondo) e il quadrato della cifra; se non ci sta, la cifra è troppo grande: una in meno'],['Fine','quello che resta è il resto: se è 0 il numero è un quadrato perfetto']]},
  xn:{d:'Una coppia per ogni cifra del moltiplicatore',rules:[['Prima','scrivi tanti zeri davanti quante sono le cifre del moltiplicatore'],['Ogni passo','somma tutte le coppie: la cifra sopra con l\'ultima del moltiplicatore, poi verso l\'interno, una coppia per cifra'],['Consiglio','usa le dita per non perdere il segno: una coppia alla volta'],['Riporto','può essere anche più di 9: portalo tutto al passo dopo']]}
 };
 const MULTI={x2:{k:[2,2],label:'× 2 cifre'},x3:{k:[3,3],label:'× 3 cifre'},xn:{k:[4,5],label:'× N cifre'},u1:{k:[1,1],label:'Due dita × 1 cifra',tf:1,lo:3},u2:{k:[2,2],label:'Due dita × 2 cifre',tf:1,lo:2},u3:{k:[3,3],label:'Due dita × 3 cifre',tf:1,lo:2},un:{k:[4,5],label:'Due dita × N cifre',tf:1,lo:2}};
 const isMulti=t=>typeof t==='string'&&!!MULTI[t];
-const XLBL={ad:'Addizione veloce',ds:'Divisione semplice',df:'Divisione veloce'};
+const XLBL={ad:'Addizione veloce',ds:'Divisione semplice',df:'Divisione veloce',q2:'Quadrati',rq:'Radice quadrata'};
 const tLabel=t=>XLBL[t]||(isMulti(t)?MULTI[t].label:'× '+t);
 const pT=v=>isNaN(+v)?v:+v;
 const DIFFM={facile:[2,2],medio:[2,3],difficile:[3,4]};
@@ -974,7 +993,7 @@ function dayTick(){const d=new Date(),k=dayKey(d);if(P.day===k)return;const yk=d
 function shake(el){el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake')}
 function flashOk(el){el.classList.remove('flash-ok');void el.offsetWidth;el.classList.add('flash-ok')}
 /* ---------- addizione veloce e divisioni (capitoli 4 e 5) ---------- */
-const isX=t=>t==='ad'||t==='ds'||t==='df';
+const isX=t=>t==='ad'||t==='ds'||t==='df'||t==='q2'||t==='rq';
 const digSum=x=>{let s=String(x).split('').reduce((a,b)=>a+ +b,0);while(s>9)s=String(s).split('').reduce((a,b)=>a+ +b,0);return s===9?0:s};
 function solveAddX(list){
   const L=Math.max(...list.map(x=>String(x).length)),rows=list.map(x=>String(x).padStart(L,' ')),cols=[],steps=[];
@@ -1043,15 +1062,62 @@ function solveDivFastX(n,d){
   const quotient=steps.filter(s=>s.kind==='fq').map(s=>s.q).join('').replace(/^0+(?=\d)/,'')||'0';
   return {kind:'df',n,d,a,b,div,steps,quotient,remainder:P,start,P0,result:quotient};
 }
-function pSolve(p){return p.t==='ad'?solveAddX(p.list):p.t==='ds'?solveDivSimpleX(p.n,p.m):p.t==='df'?solveDivFastX(p.n,p.m):solveBy(p.n,p.m,p.t)}
-function pAns(p){return p.t==='ad'?p.list.reduce((a,b)=>a+b,0):(p.t==='ds'||p.t==='df')?Math.floor(p.n/p.m):p.n*p.m}
-function pText(p){return p.t==='ad'?p.list.map(fmt).join(' + '):(p.t==='ds'||p.t==='df')?`${fmt(p.n)} : ${p.m}`:`${fmt(p.n)} × ${fmt(p.m)}`}
+const dirTxt=m=>m==='ds'||m==='df'?'Si lavora da sinistra a destra, come nella divisione in colonna.':m==='rq'?'Si lavora da sinistra a destra, un gruppo di due cifre alla volta.':m==='q2'?'Prima si calcolano i blocchi, poi si comprime da destra a sinistra con il riporto.':m==='ad'?'Ogni colonna si somma dall\'alto in basso; la somma finale si fa da destra a sinistra.':'Lavora da destra a sinistra, una cifra alla volta.';
+const isLTR=t=>t==='ds'||t==='df'||t==='rq';
+const isqrt=n=>{let r=Math.floor(Math.sqrt(n));while(r*r>n)r--;while((r+1)*(r+1)<=n)r++;return r};
+function solveSquareX(n){
+  const D=String(n).split('').map(Number),k=D.length,R=[...D].reverse(),blocks=[],steps=[];
+  const names=k===2?['quadrato delle unità','doppio prodotto','quadrato delle decine']:null;
+  for(let p=0;p<=2*(k-1);p++){let v=0;const parts=[];
+    for(let i=0;i<k;i++){const j=p-i;if(j<i||j>=k)continue;
+      if(i===j){v+=R[i]*R[i];parts.push({t:'sq',a:R[i],li:k-1-i})}else{v+=2*R[i]*R[j];parts.push({t:'dp',a:R[j],b:R[i],li:k-1-j,lj:k-1-i})}}
+    const expr=parts.map(x=>x.t==='sq'?`${x.a} × ${x.a}`:`2 × ${x.a} × ${x.b}`).join(' + ');
+    const vals=parts.map(x=>x.t==='sq'?x.a*x.a:2*x.a*x.b);
+    const name=names?names[p]:parts.map(x=>x.t==='sq'?`quadrato di ${x.a}`:`doppio prodotto ${x.a}·${x.b}`).join(' + ');
+    blocks.push({p,v,parts,expr,name});
+    steps.push({kind:'qb',p,v,parts,expect:v,ask:`Blocco ${p+1}: quanto fa ${expr}?`,hint:parts.length>1?`${vals.join(' + ')} = ?`:`${expr} = ?`,
+      text:`Blocco ${p+1}, ${name}: ${expr} = ${parts.length>1?vals.join(' + ')+' = ':''}${v}.`})}
+  let carry=0;const last=blocks.length-1;
+  blocks.forEach(b=>{const s=b.v+carry,isL=b.p===last;
+    steps.push(isL?{kind:'qc',p:b.p,v:b.v,carry,s,w:String(s),last:true,expect:s,ask:`Ultimo blocco: quanto fa ${b.v}${carry?' + '+carry:''}? Scrivi tutto il numero.`,hint:`${b.v} + ${carry} = ?`,
+        text:carry?`Ultimo blocco: ${b.v} + riporto ${carry} = ${s} → scrivo ${s} tutto davanti.`:`Ultimo blocco: ${b.v} → lo scrivo tutto davanti.`}
+      :{kind:'qc',p:b.p,v:b.v,carry,s,w:String(s%10),expect:s%10,ask:`Posto ${b.p+1}: ${b.v}${carry?' + '+carry:''}, scrivi le unità.`,hint:`${b.v} + ${carry} = ${s}: scrivi solo l'ultima cifra`,
+        text:`Posto ${b.p+1}: `+(carry?`${b.v} + riporto ${carry} = ${s}`:`blocco ${b.v}`)+` → scrivo ${s%10}${s>=10?`, riporto ${Math.floor(s/10)}`:''}.`});
+    carry=isL?0:Math.floor(s/10)});
+  return {kind:'sq',n,k,blocks,steps,result:String(n*n)};
+}
+function solveRootX(n){
+  const s=String(n),f=s.length%2||2,gs=[s.slice(0,f)];for(let j=f;j<s.length;j+=2)gs.push(s.slice(j,j+2));
+  const steps=[],g0=+gs[0],a=isqrt(g0);let R=g0-a*a,A=a;
+  steps.push({kind:'r0',g:0,W:g0,d:a,sq:a*a,expect:a,ask:`Qual è la cifra più grande il cui quadrato non supera ${g0}?`,hint:`${a} × ${a} = ${a*a}; ${a+1} × ${a+1} = ${(a+1)**2}`,
+    text:`Primo gruppo ${g0}: ${a} × ${a} = ${a*a}`+((a+1)**2>g0&&a<9?`, ${a+1} × ${a+1} = ${(a+1)**2} è troppo`:'')+`. La prima cifra della radice è ${a}.`});
+  steps.push({kind:'r0s',g:0,W:g0,d:a,sq:a*a,R,expect:R,ask:`Quanto fa ${g0} − ${a*a}?`,hint:`${g0} − ${a*a} = ?`,text:`${g0} − ${a*a} = ${R}.`});
+  for(let gi=1;gi<gs.length;gi++){
+    const W=R*100+(+gs[gi]),W10=Math.floor(W/10),est=Math.min(9,Math.floor(W10/(2*A)));let d=est;const tries=[];
+    while(d>0&&(20*A+d)*d>W){tries.push(d);d--}
+    const dp=2*A*d,sq=d*d,Rn=W-dp*10-sq,base={g:gi,W,A,d,est,dp,sq,Rn,R0:R,last:gi===gs.length-1};
+    const why=tries.map(t=>`con ${t} dovrei togliere ${2*A*t}0 + ${t*t} = ${(20*A+t)*t}, più di ${W}`).join('; ');
+    steps.push({...base,kind:'rd',expect:d,ask:`Quanto fa ${W10} : ${2*A}? Tieni la parte intera (massimo 9).`,hint:`${W10} : ${2*A} = ${est}${est!==d?' … ma controlla se ci sta!':''}`,
+      text:`Accanto al resto ${R} abbasso ${gs[gi]}: ${W}. Senza l'ultima cifra è ${W10}; il doppio di ${A} è ${2*A}: ${W10} : ${2*A} = ${est}${est>=9&&Math.floor(W10/(2*A))>9?' (al massimo 9)':''}`+(why?`. Ma ${why}: uso ${d}.`:`. La cifra è ${d}.`)});
+    steps.push({...base,kind:'rdp',expect:dp,ask:`Doppio prodotto: quanto fa 2 × ${A} × ${d}?`,hint:`2 × ${A} = ${2*A}; ${2*A} × ${d} = ?`,text:`Doppio prodotto: 2 × ${A} × ${d} = ${dp}.`});
+    steps.push({...base,kind:'rsq',expect:sq,ask:`Quadrato della cifra: quanto fa ${d} × ${d}?`,hint:`${d} × ${d} = ?`,text:`Quadrato della cifra: ${d} × ${d} = ${sq}.`});
+    steps.push({...base,kind:'rs',expect:Rn,ask:`Quanto fa ${W} − ${dp}0 − ${sq}?`,hint:`${W} − ${dp*10} = ${W-dp*10}; poi − ${sq}`,
+      text:`${W} − ${dp}0 − ${sq} = ${Rn}`+(base.last?(Rn?`: è il resto.`:`: resto 0, è un quadrato perfetto!`):'.')});
+    A=A*10+d;R=Rn}
+  return {kind:'rq',n,gs,steps,root:A,remainder:R,result:String(A)};
+}
+function pSolve(p){return p.t==='q2'?solveSquareX(p.n):p.t==='rq'?solveRootX(p.n):p.t==='ad'?solveAddX(p.list):p.t==='ds'?solveDivSimpleX(p.n,p.m):p.t==='df'?solveDivFastX(p.n,p.m):solveBy(p.n,p.m,p.t)}
+function pAns(p){return p.t==='q2'?p.n*p.n:p.t==='rq'?isqrt(p.n):p.t==='ad'?p.list.reduce((a,b)=>a+b,0):(p.t==='ds'||p.t==='df')?Math.floor(p.n/p.m):p.n*p.m}
+function pText(p){return p.t==='q2'?`${fmt(p.n)}²`:p.t==='rq'?`√${fmt(p.n)}`:p.t==='ad'?p.list.map(fmt).join(' + '):(p.t==='ds'||p.t==='df')?`${fmt(p.n)} : ${p.m}`:`${fmt(p.n)} × ${fmt(p.m)}`}
 function pHTML(p){if(p.t==='ad')return `<span class="astack">${p.list.map((x,i)=>`<span>${i===p.list.length-1?'<i class="op">+</i>':''}${x}</span>`).join('')}</span>`;
+  if(p.t==='q2')return `${p.n}<sup class="op sq">2</sup>`;if(p.t==='rq')return `<span class="op">√</span><span class="rad">${p.n}</span>`;
   if(p.t==='ds'||p.t==='df')return `${p.n} <span class="op">:</span> ${p.m}`;return probHTML(p.n,p.m)}
-function pPts(p){if(p.t==='ad')return 10*Math.max(...p.list.map(x=>String(x).length))*Math.ceil(p.list.length/2);return 10*String(p.n).length*String(p.m).length}
+function pPts(p){const ln=String(p.n).length;if(p.t==='q2')return 10*ln*ln;if(p.t==='rq')return 10*ln*Math.ceil(ln/2);if(p.t==='ad')return 10*Math.max(...p.list.map(x=>String(x).length))*Math.ceil(p.list.length/2);return 10*String(p.n).length*String(p.m).length}
 function pServer(p,v){const o={t:String(p.t),v};if(p.t==='ad')o.list=p.list;else{o.n=p.n;o.m=p.m}return o}
 function genX(rng,t,diff){
   if(t==='ad'){const cfg={facile:[4,2,3],medio:[5,3,3],difficile:[6,3,4]}[diff],list=[];for(let i=0;i<cfg[0];i++)list.push(genNum(rng,cfg[1],cfg[2]));return {t,list}}
+  if(t==='q2'){let n;if(diff==='difficile')n=genNum(rng,3,3);else if(diff==='facile'){const a=1+Math.floor(rng()*9),b=Math.floor(rng()*10);n=rng()<.5?a*10+5:50+b}else n=genNum(rng,2,2);return {t,m:2,n}}
+  if(t==='rq'){const r=diff==='facile'?10+Math.floor(rng()*22):diff==='medio'?32+Math.floor(rng()*68):100+Math.floor(rng()*900);return {t,m:2,n:r*r}}
   const qd={facile:2,medio:3,difficile:t==='df'?4:3}[diff];let m;
   if(t==='ds')m=diff==='difficile'?100+Math.floor(rng()*400):diff==='facile'?12+Math.floor(rng()*38):12+Math.floor(rng()*88);
   else m=11+Math.floor(rng()*89);
@@ -1139,7 +1205,7 @@ const L={m:11,n:null,sol:null,k:0,err:0,errTot:0,mode:'guided',timer:null,done:f
 function learnOpen(){
   const FAM=[{id:'mul',label:'×2…×12',name:'Moltiplicazioni ×2…×12',items:[2,3,4,5,6,7,8,9,11,12],ol:t=>'× '+t},{id:'dir',label:'Diretto',name:'Metodo diretto',items:['x2','x3','xn'],ol:t=>'Diretto '+({x2:'×2 cifre',x3:'×3 cifre',xn:'×N cifre'})[t]},
     {id:'tf',label:'Due dita',name:'Metodo a due dita',items:['u1','u2','u3','un'],ol:t=>'2 dita '+({u1:'×1 cifra',u2:'×2 cifre',u3:'×3 cifre',un:'×N cifre'})[t]},{id:'ad',label:'Addizione',name:'Addizione',items:['ad'],ol:t=>'Addizione veloce'},
-    {id:'div',label:'Divisione',name:'Divisione',items:['ds','df'],ol:t=>({ds:'Div. semplice',df:'Div. veloce'})[t]}];
+    {id:'div',label:'Divisione',name:'Divisione',items:['ds','df'],ol:t=>({ds:'Div. semplice',df:'Div. veloce'})[t]},{id:'pow',label:'Quadrati e radici',name:'Quadrati e radici',items:['q2','rq'],ol:t=>({q2:'Quadrati',rq:'Radice quadrata'})[t]}];
   const sm=t=>{const n=stars(t);return n?' '+'★'.repeat(n):''};
   $('learnChips').innerHTML=`<div class="famrow">${FAM.map(f=>{const act=f.items.includes(L.m);
     if(f.items.length===1)return `<button class="chip txt ${act?'on':''}" data-m="${f.items[0]}" type="button">${f.label}</button>`;
@@ -1149,10 +1215,10 @@ function learnOpen(){
   $('learnChips').querySelectorAll('button').forEach(b=>b.onclick=()=>pickRule(b.dataset.m));
   $('learnChips').querySelectorAll('select').forEach(sel=>sel.onchange=()=>{if(sel.value)pickRule(sel.value)});
   const t=TECH[L.m];
-  $('ruleCard').innerHTML=`<div class="row" style="justify-content:space-between"><h2>${tLabel(L.m)}</h2>${starHTML(stars(L.m))}</div><p class="muted">${t.d}. ${L.m==='ds'||L.m==='df'?'Si lavora da sinistra a destra, come nella divisione in colonna.':L.m==='ad'?'Ogni colonna si somma dall\'alto in basso; la somma finale si fa da destra a sinistra.':'Lavora da destra a sinistra, una cifra alla volta.'}</p>`+t.rules.map(r=>`<div class="rule"><b>${r[0]}</b><span>${r[1]}</span></div>`).join('')+([11,12,6,7,5].includes(L.m)?`<p class="note" style="margin:0">Alla prima cifra a destra non c'è il vicino: vale 0, quindi non aggiungi niente.</p>`:'')+(isTF(L.m)?`<p class="note" style="margin:0">Nella coppia più a destra la T non c'è: vale 0, quindi delle decine non aggiungi niente.</p>`:'')+(isTF(L.m)?`<p class="muted" style="font-size:.9rem">Nell'esercizio: bordo pieno = cifra U, bordo tratteggiato = cifra T. Ogni colore è una cifra del moltiplicatore.</p>`:'')+(L.m==='df'?`<details class="why"><summary>Perché funziona?</summary><p>Prendi il divisore <b class="mono">28</b>: è <b class="mono" style="color:var(--yellow)">20</b> + <b class="mono" style="color:var(--cyan)">8</b>. Togliere 3 × 28 vuol dire togliere 3 × 20 e 3 × 8 = 24.</p><p><b>NT</b> toglie tutte le <b>decine</b>: 2 × 3 (le decine di 20 × 3) più le 2 decine di 24. Si toglie <b>prima</b> di abbassare la cifra, perché lavora un posto più a sinistra.</p><p><b>U</b> toglie le <b>unità</b> che mancano, cioè il 4 di 24, <b>dopo</b> aver abbassato la cifra.</p><p>Così togli 3 × 28 tutto insieme senza mai fare la moltiplicazione completa.</p></details>`:'')+(L.m==='ds'?`<details class="why"><summary>Perché funziona?</summary><p>Dividere vuol dire chiedersi quante volte il divisore sta nel numero. Con la tabella pronta non devi indovinare: guardi e trovi subito il multiplo giusto.</p><p>La tabella si fa solo con addizioni, e la prova con la somma delle cifre ti dice subito se una riga è sbagliata.</p></details>`:'')+`<button class="btn sm ghost" id="ruleToSolo" style="align-self:flex-start">Allenati in gara: ${tLabel(L.m)}</button>`;
+  $('ruleCard').innerHTML=`<div class="row" style="justify-content:space-between"><h2>${tLabel(L.m)}</h2>${starHTML(stars(L.m))}</div><p class="muted">${t.d}. ${dirTxt(L.m)}</p>`+t.rules.map(r=>`<div class="rule"><b>${r[0]}</b><span>${r[1]}</span></div>`).join('')+([11,12,6,7,5].includes(L.m)?`<p class="note" style="margin:0">Alla prima cifra a destra non c'è il vicino: vale 0, quindi non aggiungi niente.</p>`:'')+(isTF(L.m)?`<p class="note" style="margin:0">Nella coppia più a destra la T non c'è: vale 0, quindi delle decine non aggiungi niente.</p>`:'')+(isTF(L.m)?`<p class="muted" style="font-size:.9rem">Nell'esercizio: bordo pieno = cifra U, bordo tratteggiato = cifra T. Ogni colore è una cifra del moltiplicatore.</p>`:'')+(L.m==='df'?`<details class="why"><summary>Perché funziona?</summary><p>Prendi il divisore <b class="mono">28</b>: è <b class="mono" style="color:var(--yellow)">20</b> + <b class="mono" style="color:var(--cyan)">8</b>. Togliere 3 × 28 vuol dire togliere 3 × 20 e 3 × 8 = 24.</p><p><b>NT</b> toglie tutte le <b>decine</b>: 2 × 3 (le decine di 20 × 3) più le 2 decine di 24. Si toglie <b>prima</b> di abbassare la cifra, perché lavora un posto più a sinistra.</p><p><b>U</b> toglie le <b>unità</b> che mancano, cioè il 4 di 24, <b>dopo</b> aver abbassato la cifra.</p><p>Così togli 3 × 28 tutto insieme senza mai fare la moltiplicazione completa.</p></details>`:'')+(L.m==='q2'?`<details class="why"><summary>Perché funziona?</summary><p><b class="mono">43</b> è <b class="mono" style="color:var(--yellow)">40</b> + <b class="mono" style="color:var(--cyan)">3</b>. Moltiplicando 43 × 43 ogni parte incontra ogni altra parte: 40 × 40, 3 × 3 e due volte 40 × 3.</p><p>Per questo i blocchi sono il quadrato delle decine (16, cioè 1600), il <b>doppio prodotto</b> (24, cioè 240) e il quadrato delle unità (9). Messi ognuno nella sua colonna e compressi con il riporto danno 1849.</p></details>`:'')+(L.m==='rq'?`<details class="why"><summary>Perché funziona?</summary><p>È il quadrato al contrario. Se la radice è 45, il numero contiene 40², il doppio prodotto 2 × 40 × 5 e 5².</p><p>La prima cifra toglie il quadrato più grande; ogni cifra dopo toglie il suo doppio prodotto con quello che hai già trovato e il suo quadrato. Se alla fine resta 0, il numero era un quadrato perfetto.</p></details>`:'')+(L.m==='ds'?`<details class="why"><summary>Perché funziona?</summary><p>Dividere vuol dire chiedersi quante volte il divisore sta nel numero. Con la tabella pronta non devi indovinare: guardi e trovi subito il multiplo giusto.</p><p>La tabella si fa solo con addizioni, e la prova con la somma delle cifre ti dice subito se una riga è sbagliata.</p></details>`:'')+`<button class="btn sm ghost" id="ruleToSolo" style="align-self:flex-start">Allenati in gara: ${tLabel(L.m)}</button>`;
   $('ruleToSolo').onclick=()=>{SS.techs=[L.m];location.hash='solo'};
   $('customM').style.display=(isMulti(L.m)||L.m==='ds'||L.m==='df')?'':'none';$('customN').style.display=L.m==='ad'?'none':'';$('useN').style.display=L.m==='ad'?'none':'';
-  $('customN').placeholder=isX(L.m)?'Dividendo':'Il tuo numero';$('customM').placeholder=isX(L.m)?'Divisore':'× quanto';
+  $('customN').placeholder=L.m==='q2'?'Numero (2-3 cifre)':L.m==='rq'?'Il tuo numero':isX(L.m)?'Dividendo':'Il tuo numero';$('customM').placeholder=isX(L.m)?'Divisore':'× quanto';
   if(isX(L.m))return L.p&&L.p.t===L.m?learnStartX(L.p):learnStartX(null);
   if(!L.n||!L.mult)return learnNew();
   learnStart(L.n);
@@ -1176,7 +1242,7 @@ const IC={back:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentCol
   pause:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
   play:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>',
   again:'<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.6 9A7 7 0 1 1 5 13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M3 4v7h7z" fill="currentColor"/></svg>'};
-function playStart(){clearInterval(L.timer);L.playing=true;L.timer=setInterval(()=>{if(L.done){playStop();return}learnAccept(true)},L.sol&&(L.sol.kind==='ds'||L.sol.kind==='df')?3200:1700);navRender()}
+function playStart(){clearInterval(L.timer);L.playing=true;L.timer=setInterval(()=>{if(L.done){playStop();return}learnAccept(true)},L.sol&&(L.sol.kind==='ds'||L.sol.kind==='df'||L.sol.kind==='rq')?3200:L.sol&&L.sol.kind==='sq'?2600:1700);navRender()}
 function playStop(){clearInterval(L.timer);L.playing=false;navRender()}
 function learnBack(){if(!L.sol||L.k===0)return;if(L.playing)playStop();L.k--;L.done=false;L.err=0;const f=$('log').firstElementChild;if(f)f.remove();learnRender()}
 function learnFwd(){if(!L.sol||L.done)return;if(L.playing)playStop();
@@ -1261,6 +1327,8 @@ function learnCheer(s0){
 }
 /* ---------- lezioni: addizione veloce e divisioni ---------- */
 function lessonX(t){const r=Math.random;
+  if(t==='q2')return {t,m:2,n:r()<.75?genNum(r,2,2):genNum(r,3,3)};
+  if(t==='rq'){const q=r()<.7;return {t,m:2,n:q?(r()<.6?32+Math.floor(r()*68):100+Math.floor(r()*217))**2:genNum(r,4,5)}}
   if(t==='ad'){const list=[];for(let i=0;i<4;i++)list.push(genNum(r,3,3));return {t,list}}
   if(t==='ds')return {t,m:12+Math.floor(r()*86),n:genNum(r,4,5)};
   return {t,m:21+Math.floor(r()*78),n:genNum(r,4,5)};
@@ -1304,9 +1372,57 @@ function renderX(){
       note=done.length&&done[done.length-1].kind==='col'?'Somma a L: per ogni posto, totale della colonna + spunte della stessa colonna + spunte della colonna a destra, più il riporto.':(cur.c===-1?'Ultimo posto a sinistra: qui c\'è solo la somma delle spunte della prima colonna e il riporto.':'');
       hint=`${cur.r} + ${cur.t} + ${cur.tr}${cur.cin?' + '+cur.cin:''} = ${cur.tot}${cur.c>=0?' → scrivi solo le unità':''}`}
   }
+  if(sol.kind==='sq'){
+    const D=String(p.n),k=D.length,Lc=2*k,col=pl=>Lc-pl;
+    const row=items=>`<div class="cells" style="--n:${Lc}">${items.map(it=>`<div class="${it.c}" style="grid-row:1;grid-column:${it.col} / span ${it.s||1}">${it.v===undefined?'':it.v}</div>`).join('')}</div>`;
+    const bd={},rd={};done.forEach(s=>{if(s.kind==='qb')bd[s.p]=s.v;else rd[s.p]=s.w});
+    const hl={};if(cur&&cur.kind==='qb')cur.parts.forEach(x=>{if(x.t==='sq')hl[x.li]='num';else{hl[x.li]='pc0';hl[x.lj]='pc1'}});
+    let h=row([...D].map((ch,i)=>({col:Lc-k+1+i,c:'cell'+(hl[i]?' '+hl[i]:''),v:ch})))+`<div class="times">al quadrato</div>`;
+    h+=row(sol.blocks.map(b=>{const isC=cur&&cur.p===b.p;
+      if(cur&&cur.kind==='qb'&&isC)return {col:col(b.p),c:'cell small cur typing blk'};
+      return {col:col(b.p),c:bd[b.p]!==undefined?'cell small blk'+(isC&&cur.kind==='qc'?' pc0':''):'cell blank small',v:bd[b.p]}}));
+    h+=`<div class="rline"></div>`;
+    const res=[];Object.keys(rd).forEach(pl=>{const w=rd[pl];[...w].forEach((ch,ix)=>res.push({col:col(+pl)-(w.length-1-ix),c:'cell done',v:ch}))});
+    if(cur&&cur.kind==='qc'){const l=String(cur.expect).length;res.push({col:col(cur.p)-l+1,s:l,c:'cell cur typing'})}
+    if(!res.length)res.push({col:1,c:'cell blank'});
+    h+=row(res);
+    W.innerHTML=`<div class="stack sqx" style="gap:5px">${h}</div>`;
+    if(cur&&cur.kind==='qb'){const b=sol.blocks[cur.p];info=`<span class="pill">Blocco ${cur.p+1} di ${sol.blocks.length}</span><span class="pill y">${esc(b.name)}</span>`;
+      note=k===2?'Ogni blocco va nella sua colonna: quadrato delle unità, doppio prodotto, quadrato delle decine. Poi si comprime da destra con il riporto.':'Con 3 cifre i blocchi sono 5: nel blocco centrale ci sono il quadrato della cifra in mezzo e il doppio prodotto delle cifre esterne.';
+      const t=+D[1],u=+D[k-1];if(k===2&&u===5)note+=` Scorciatoia: finisce con 5, quindi ${D[0]} × ${+D[0]+1} = ${(+D[0])*(+D[0]+1)} e poi 25.`;
+      else if(k===2&&+D[0]===5)note+=` Scorciatoia: le decine sono 5, quindi 25 + ${t} = ${25+t} e poi ${t} × ${t} a due cifre.`}
+    else if(cur){info=`<span class="pill">Posto ${cur.p+1}</span><span class="pill pp0">blocco <b>${cur.v}</b></span><span class="pill">riporto <b>${cur.carry}</b></span>`;
+      note=cur.last?'Ultimo blocco: scrivi tutto il numero, riporto compreso.':'Comprimi da destra: blocco + riporto, scrivi le unità e porta avanti le decine.'}
+    if(cur)hint=cur.hint;
+  }
+  if(sol.kind==='rq'){
+    const gs=sol.gs,cg=cur?cur.g:gs.length;
+    const top=`<div class="rtop"><span class="rsym">√</span><div class="rgs">${gs.map((g,i)=>`<div class="rg${i===cg?' on':i<cg?' used':''}">${[...g].map(ch=>`<span class="cell">${ch}</span>`).join('')}</div>`).join('')}</div></div>`;
+    const rdig=done.filter(s=>s.kind==='r0'||s.kind==='rd').map(s=>({c:'cell done',v:s.d}));
+    if(cur&&(cur.kind==='r0'||cur.kind==='rd'))rdig.push({c:'cell cur typing',v:''});
+    const grp={};sol.steps.forEach((s,i)=>{(grp[s.g]=grp[s.g]||[]).push(i)});
+    const rows=Object.keys(grp).map(g=>{const ix=grp[g];if(ix[0]>L.k&&!L.done)return '';const s=sol.steps[ix[0]];
+      const at=i=>i<L.k||L.done?'done':i===L.k?'cur':'todo';
+      const cell=(i,v,cls='')=>{const t=at(i);return t==='done'?`<span class="${cls}">${v}</span>`:t==='cur'&&!(sol.steps[i].kind==='r0'||sol.steps[i].kind==='rd')?'<span><b class="typing">?</b></span>':t==='cur'?'<span><b class="qmark">?</b></span>':'<span></span>'};
+      const isCur=ix.includes(L.k)&&!L.done;
+      if(+g===0)return `<div class="frow rrow${isCur?' cur':''}"><b>${s.W}</b>${cell(ix[0],s.d,'fqv')}<span class="muted">—</span>${at(ix[0])==='done'?`<span>${s.sq}</span>`:'<span></span>'}${cell(ix[1],sol.steps[ix[1]].R,'fpv')}</div>`;
+      return `<div class="frow rrow${isCur?' cur':''}"><b>${s.W}</b>${cell(ix[0],s.d,'fqv')}${cell(ix[1],s.dp+'<i class="lowd">0</i>')}${cell(ix[2],s.sq)}${cell(ix[3],s.Rn,'fpv')}</div>`}).join('');
+    W.innerHTML=`<div class="stack" style="gap:6px">${top}<div class="rres"><span class="muted">radice</span><div class="cells" style="--n:${Math.max(1,rdig.length)}">${xCells(rdig)}</div></div>
+      <div class="ftab"><div class="frow rrow fh"><span>Numero</span><span>Cifra</span><span>Doppio prodotto<small>con uno zero</small></span><span>Quadrato<small>della cifra</small></span><span>Resto</span></div>${rows}</div></div>`;
+    if(cur){
+      if(cur.kind==='r0')info=`<span class="pill">Primo gruppo</span><span class="pill y"><b>${cur.W}</b></span>`;
+      else if(cur.kind==='r0s')info=`<span class="pill">Togli il quadrato</span><span class="pill y"><b>${cur.W}</b> − <b>${cur.sq}</b></span>`;
+      else if(cur.kind==='rd')info=`<span class="pill">Cifra ${cur.g+1} della radice</span><span class="pill">numero <b>${cur.W}</b></span><span class="pill pp0">dividi per <b>${2*cur.A}</b></span>`;
+      else if(cur.kind==='rdp')info=`<span class="pill">Doppio prodotto</span><span class="pill pp0">2 × <b>${cur.A}</b> × <b>${cur.d}</b></span>`;
+      else if(cur.kind==='rsq')info=`<span class="pill">Quadrato</span><span class="pill pp1"><b>${cur.d}</b> × <b>${cur.d}</b></span>`;
+      else info=`<span class="pill">Nuovo resto</span><span class="pill y"><b>${cur.W}</b> − <b>${cur.dp}0</b> − <b>${cur.sq}</b></span>`;
+      note=cur.g===0?`Dividi il numero in gruppi di 2 cifre partendo da destra: ${gs.join(' | ')}. Ogni gruppo darà una cifra della radice.`
+        :'Promemoria: abbassa il gruppo · stima = numero senza l\'ultima cifra : doppio della radice trovata · togli il doppio prodotto con uno zero e il quadrato della cifra · se non ci sta, la cifra è troppo grande (−1).';
+      hint=cur.hint}
+  }
   if(sol.kind==='ds'){
     const D=String(p.n),N=D.length,C=j=>j+2,tabDone=L.tabReady?10:1+done.filter(s=>s.kind==='tab').length;
-    const row=items=>`<div class="cells" style="--n:${N+1}">${items.map(it=>`<div class="${it.c}" style="grid-column:${it.col} / span ${it.s||1}">${it.v===undefined?'':it.v}</div>`).join('')}</div>`;
+    const row=items=>`<div class="cells" style="--n:${N+1}">${items.map(it=>`<div class="${it.c}" style="grid-row:1;grid-column:${it.col} / span ${it.s||1}">${it.v===undefined?'':it.v}</div>`).join('')}</div>`;
     const num=(val,end,cls)=>{const s=String(val);return [...s].map((ch,k)=>({col:C(end-s.length+1+k),c:typeof cls==='function'?cls(k,s.length):cls,v:ch}))};
     const isDone=s=>done.includes(s),cs=cur&&(cur.kind==='dq'||cur.kind==='dsub')?cur:null;
     const dqDone=done.filter(s=>s.kind==='dq'),usedTo=dqDone.length?dqDone[dqDone.length-1].pos:-1;
@@ -1361,9 +1477,9 @@ function renderX(){
       else {info=`<span class="pill">Nuovo resto</span><span class="pill y"><b>${cur.W}</b> − <b>${cur.U}</b></span>`;hint=`${cur.W} − ${cur.U} = ?`}
       note=`Promemoria: dividi per ${sol.div}${sol.b>=8?` (${sol.a} + 1, perché il divisore finisce con ${sol.b})`:''} · se non riesci a togliere, la cifra è troppo grande (−1) · se il nuovo P è ${p.m} o più, è troppo piccola (+1).`}
   }
-  $('infoBar').innerHTML=L.done?`<span class="pill">Risultato: <b>${fmt(sol.result)}</b></span>${sol.kind!=='add'?`<span class="pill">Resto: <b>${sol.remainder}</b></span>`:''}<span class="pill">Errori: <b>${L.errTot}</b></span>`:info;
+  $('infoBar').innerHTML=L.done?`<span class="pill">Risultato: <b>${fmt(sol.result)}</b></span>${sol.remainder!==undefined?`<span class="pill">Resto: <b>${sol.remainder}</b></span>`:''}<span class="pill">Errori: <b>${L.errTot}</b></span>`:info;
   $('stepNote').textContent=L.done?'':note;
-  if(L.done){$('say').innerHTML=`<b style="color:var(--ok)">Fatto!</b> ${esc(pText(p))} = <b class="mono">${fmt(sol.result)}</b>${sol.kind!=='add'?` resto <b class="mono">${sol.remainder}</b>`:''}. <button class="btn sm y" id="againBtn" style="margin-left:6px">Un altro</button>`;$('againBtn').onclick=learnNew;return}
+  if(L.done){$('say').innerHTML=`<b style="color:var(--ok)">Fatto!</b> ${esc(pText(p))} = <b class="mono">${fmt(sol.result)}</b>${sol.remainder!==undefined?` resto <b class="mono">${sol.remainder}</b>`:''}. <button class="btn sm y" id="againBtn" style="margin-left:6px">Un altro</button>`;$('againBtn').onclick=learnNew;return}
   if(L.mode==='watch')$('say').textContent=cur.text;
   else $('say').innerHTML=L.err>=2?`Suggerimento: <span class="mono">${esc(hint)}</span>`:(cur&&cur.ask?esc(cur.ask):'');
 }
@@ -1375,14 +1491,17 @@ function learnKeyX(k){
   if(v===String(cur.expect)){sOk();L.xans.clear();learnAccept(false);return}
   sNo();L.err++;L.errTot++;shake($('workX'));L.xans.clear();learnRender();
   if(L.err<2){let m;
-    if(cur.kind==='fq'&&+v===cur.q0&&cur.q0!==cur.q)m=cur.q<cur.q0?`Quasi! Con ${cur.q0} il prodotto NT o U non si può sottrarre: la cifra è troppo grande, prova con una in meno.`:`Quasi! Con ${cur.q0} il nuovo P resta più grande del divisore: la cifra è troppo piccola, prova con una in più.`;
-    else m=`<span style="color:var(--coral)">${esc(v)} non è giusto.</span> `+(cur.kind==='col'?'Somma la cifra al totale; se arrivi a 11 o più, togli 11.':cur.kind==='fin'?'Totale + spunte della colonna + spunte della colonna a destra + riporto.':cur.kind==='tab'?'Aggiungi il divisore alla riga di prima.':cur.kind==='dq'?'Scegli nella tabella il multiplo più grande che non supera il numero: la sua etichetta (×…) è la cifra.':cur.kind==='dsub'?`Fai la sottrazione ${fmt(cur.cur)} − ${fmt(cur.sub)}.`:cur.kind==='fq'?`Dividi ${cur.P} per ${cur.div} e tieni solo la parte intera.`:cur.kind==='fnt'?'NT = prima cifra del divisore × cifra + le decine di (seconda cifra × cifra).':cur.kind==='fsub'?`Togli NT da P: ${cur.P} − ${cur.NT}.`:cur.kind==='fu'?'U = solo le unità di (seconda cifra × cifra).':cur.kind==='fp'?`Togli U dal numero con la cifra abbassata: ${cur.W} − ${cur.U}.`:'Ricontrolla il passaggio.');
+    if(cur.kind==='rd'&&+v===cur.est&&cur.est!==cur.d)m=`Quasi! Con ${cur.est} il doppio prodotto e il quadrato non ci stanno in ${cur.W}: la cifra è troppo grande, prova con una in meno.`;
+    else if(cur.kind==='fq'&&+v===cur.q0&&cur.q0!==cur.q)m=cur.q<cur.q0?`Quasi! Con ${cur.q0} il prodotto NT o U non si può sottrarre: la cifra è troppo grande, prova con una in meno.`:`Quasi! Con ${cur.q0} il nuovo P resta più grande del divisore: la cifra è troppo piccola, prova con una in più.`;
+    else m=`<span style="color:var(--coral)">${esc(v)} non è giusto.</span> `+(cur.kind==='col'?'Somma la cifra al totale; se arrivi a 11 o più, togli 11.':cur.kind==='fin'?'Totale + spunte della colonna + spunte della colonna a destra + riporto.':cur.kind==='tab'?'Aggiungi il divisore alla riga di prima.':cur.kind==='dq'?'Scegli nella tabella il multiplo più grande che non supera il numero: la sua etichetta (×…) è la cifra.':cur.kind==='dsub'?`Fai la sottrazione ${fmt(cur.cur)} − ${fmt(cur.sub)}.`:cur.kind==='fq'?`Dividi ${cur.P} per ${cur.div} e tieni solo la parte intera.`:cur.kind==='fnt'?'NT = prima cifra del divisore × cifra + le decine di (seconda cifra × cifra).':cur.kind==='fsub'?`Togli NT da P: ${cur.P} − ${cur.NT}.`:cur.kind==='fu'?'U = solo le unità di (seconda cifra × cifra).':cur.kind==='fp'?`Togli U dal numero con la cifra abbassata: ${cur.W} − ${cur.U}.`:cur.kind==='qb'?'Calcola i prodotti del blocco e sommali.':cur.kind==='qc'?(cur.last?'Somma blocco e riporto e scrivi tutto il numero.':'Somma blocco e riporto: scrivi solo le unità.'):cur.kind==='r0'?'Ripassa i quadrati: 1, 4, 9, 16, 25, 36, 49, 64, 81.':cur.kind==='r0s'||cur.kind==='rs'?'Ricontrolla la sottrazione.':cur.kind==='rd'?'Dividi il numero senza l\'ultima cifra per il doppio della radice trovata.':cur.kind==='rdp'?'Doppio prodotto = 2 × radice trovata × nuova cifra.':cur.kind==='rsq'?'Moltiplica la nuova cifra per se stessa.':'Ricontrolla il passaggio.');
     $('say').innerHTML=m}
 }
 $('mGuided').onclick=()=>{L.mode='guided';learnStart(L.n)};
 $('mWatch').onclick=()=>{L.mode='watch';learnStart(L.n)};
 $('newN').onclick=learnNew;
 $('useN').onclick=()=>{const v=parseInt($('customN').value,10);if(!(v>0&&v<1e8))return toast('Scrivi un numero intero da 1 a 99.999.999');
+  if(L.m==='q2'){if(!(v>=10&&v<1000))return toast('Per i quadrati scrivi un numero da 10 a 999');return learnStartX({t:'q2',m:2,n:v})}
+  if(L.m==='rq'){if(!(v>=10&&v<1e6))return toast('Per la radice scrivi un numero da 10 a 999.999');return learnStartX({t:'rq',m:2,n:v})}
   if(L.m==='ds'||L.m==='df'){const mv=parseInt($('customM').value,10);if(L.m==='ds'&&!(mv>=2&&mv<1000))return toast('Il divisore va da 2 a 999');if(L.m==='df'&&!(mv>=11&&mv<100))return toast('Per la divisione veloce il divisore ha 2 cifre (da 11 a 99)');return learnStartX({t:L.m,n:v,m:mv})}
   if(isTF(L.m)){const mv=parseInt($('customM').value,10);if(mv>=2&&mv<1e6){const l=String(mv).length;L.mult=mv;L.m=l===1?'u1':l===2?'u2':l===3?'u3':'un'}else if($('customM').value)return toast('Il moltiplicatore va da 2 a 999.999')}
   else if(isMulti(L.m)){const mv=parseInt($('customM').value,10);if(mv>=10&&mv<1e6){L.mult=mv;L.m=techOf(mv);if(!isMulti(L.m)){L.mult=L.m}}else if($('customM').value)return toast('Il moltiplicatore deve avere da 2 a 6 cifre')}
@@ -1418,7 +1537,7 @@ $('soloStart').onclick=()=>{
   keypad($('soloKp'),soloKey);keyTarget=soloKey;
   soloNext();S.int=setInterval(soloTick,200);soloHud();setFocus();
 };
-function soloNext(){const p=genProblem(S.rng,pick(S.rng,SS.techs),SS.diff);S.p=p;S.tech=p.t;S.m=p.m;S.n=p.n;S.t0=performance.now();$('sProb').innerHTML=pHTML(p);$('sProb').classList.toggle('isadd',p.t==='ad');S.ans.rtl=(p.t==='ds'||p.t==='df')?false:$('soloRtl').checked;S.ans.clear()}
+function soloNext(){const p=genProblem(S.rng,pick(S.rng,SS.techs),SS.diff);S.p=p;S.tech=p.t;S.m=p.m;S.n=p.n;S.t0=performance.now();$('sProb').innerHTML=pHTML(p);$('sProb').classList.toggle('isadd',p.t==='ad');S.ans.rtl=isLTR(p.t)?false:$('soloRtl').checked;S.ans.clear()}
 function soloTick(){const now=performance.now();if(S.paused){S.last=now;return}S.t-=(now-S.last)/1000;S.last=now;if(!S.warned&&S.t<=10&&S.t>0){S.warned=true;cheer('Ultimi 10 secondi!',rnd(['Dai tutto!','Volata finale!','Ogni risposta conta!']),'push')}if(S.t<=0){S.t=0;soloEnd(false)}soloHud()}
 function mult(){return 1+Math.min(S.streak,5)*.2}
 function soloHud(){$('sTime').textContent=Math.ceil(S.t);$('sScore').textContent=S.score;$('sCombo').textContent='×'+mult().toFixed(1);$('sBar').style.width=(S.t/SS.dur*100)+'%';$('sBar').style.background=S.t<10?'var(--coral)':''}
@@ -1441,7 +1560,7 @@ function soloKey(k){
   }
   soloHud();
 }
-function ruleHTML(m){const t=TECH[m];return `<p class="muted" style="margin:0">${t.d}. ${m==='ds'||m==='df'?'Si lavora da sinistra a destra, come nella divisione in colonna.':m==='ad'?'Ogni colonna si somma dall\'alto in basso; la somma finale si fa da destra a sinistra.':'Lavora da destra a sinistra, una cifra alla volta.'}</p>`+t.rules.map(r=>`<div class="rule"><b>${r[0]}</b><span>${r[1]}</span></div>`).join('')+([11,12,6,7,5].includes(m)?`<p class="note" style="margin:0">Alla prima cifra a destra non c'è il vicino: vale 0, quindi non aggiungi niente.</p>`:'')+(isTF(m)?`<p class="note" style="margin:0">Nella coppia più a destra la T non c'è: vale 0, quindi delle decine non aggiungi niente.</p>`:'')}
+function ruleHTML(m){const t=TECH[m];return `<p class="muted" style="margin:0">${t.d}. ${dirTxt(m)}</p>`+t.rules.map(r=>`<div class="rule"><b>${r[0]}</b><span>${r[1]}</span></div>`).join('')+([11,12,6,7,5].includes(m)?`<p class="note" style="margin:0">Alla prima cifra a destra non c'è il vicino: vale 0, quindi non aggiungi niente.</p>`:'')+(isTF(m)?`<p class="note" style="margin:0">Nella coppia più a destra la T non c'è: vale 0, quindi delle decine non aggiungi niente.</p>`:'')}
 function soloHelp(){if(!S.running||S.paused)return;S.paused=true;S.helps=(S.helps||0)+1;S.t=Math.max(0,S.t-5);soloHud();
   const b=$('sTime');b.classList.remove('pen');void b.offsetWidth;b.classList.add('pen');beep(330,.12);
   $('rmTitle').textContent='Regola: '+tLabel(S.tech);$('rmBody').innerHTML=ruleHTML(S.tech);
@@ -1512,7 +1631,7 @@ function h2hBuild(){
   [0,1].forEach(p=>keypad($('kp'+p),k=>h2hKey(p,k)));
   $('dExit').onclick=dClose;h2hRound();
 }
-function h2hRound(){dGen();D.busy=false;[0,1].forEach(p=>{$('pr'+p).innerHTML=pHTML(D.p);D.ans[p].rtl=(D.p.t==='ds'||D.p.t==='df')?false:D.rtl;$('pr'+p).classList.toggle('isadd',D.p.t==='ad');D.ans[p].clear()})}
+function h2hRound(){dGen();D.busy=false;[0,1].forEach(p=>{$('pr'+p).innerHTML=pHTML(D.p);D.ans[p].rtl=isLTR(D.p.t)?false:D.rtl;$('pr'+p).classList.toggle('isadd',D.p.t==='ad');D.ans[p].clear()})}
 function h2hKey(p,k){
   if(D.busy||D.locked[p])return;const a=D.ans[p];
   if(k==='del')return a.del();if(k!=='ok')return a.push(k);if(!a.v)return;
@@ -1533,7 +1652,7 @@ function turnBuild(){
   <div class="banner" id="tBan"></div><div class="tbar"><i id="tBar"></i></div><div class="prob" id="tProb"></div><div class="ans" id="tAns"></div><div class="fb" id="tFb"></div><div id="tKp"></div></div>${winnerHTML()}`;
   D.turn=0;D.ans=new Answer($('tAns'),D.rtl);keypad($('tKp'),turnKey);keyTarget=turnKey;$('dExit').onclick=dClose;turnStart();
 }
-function turnStart(){dGen();D.steal=false;D.active=D.turn;D.max=25;D.t=25;D.last=performance.now();D.busy=false;$('tProb').innerHTML=pHTML(D.p);D.ans.rtl=(D.p.t==='ds'||D.p.t==='df')?false:D.rtl;$('tProb').classList.toggle('isadd',D.p.t==='ad');D.ans.clear();$('tFb').textContent='';turnPaint();clearInterval(D.int);D.int=setInterval(turnTick,200)}
+function turnStart(){dGen();D.steal=false;D.active=D.turn;D.max=25;D.t=25;D.last=performance.now();D.busy=false;$('tProb').innerHTML=pHTML(D.p);D.ans.rtl=isLTR(D.p.t)?false:D.rtl;$('tProb').classList.toggle('isadd',D.p.t==='ad');D.ans.clear();$('tFb').textContent='';turnPaint();clearInterval(D.int);D.int=setInterval(turnTick,200)}
 function turnPaint(){[0,1].forEach(p=>$('tm'+p).classList.toggle('act',p===D.active));$('tBan').innerHTML=(D.steal?'Rubapalla! Tocca a ':'Tocca a ')+`<span style="color:${D.active===0?'var(--coral)':'var(--blue)'}">${esc(D.names[D.active])}</span>`;$('tBar').style.background=D.active===0?'var(--coral)':'var(--blue)'}
 function turnTick(){const now=performance.now();D.t-=(now-D.last)/1000;D.last=now;$('tBar').style.width=Math.max(0,D.t/D.max*100)+'%';if(D.t<=0&&!D.busy)turnFail('Tempo scaduto')}
 function turnFail(msg){
@@ -1761,7 +1880,7 @@ function hostRender(){
     const hq=(H.questions||[])[r.current_q]||r.cur_q||{n:r.cur_n,m:r.cur_m},so=pSolve(hq),st=H.stats||{right:0,wrong:0},tot=Math.max(1,H.players.length),none=Math.max(0,H.players.length-st.right-st.wrong),last=r.current_q+1>=r.total_q;
     body=`<span class="eyebrow">Domanda ${r.current_q+1} di ${r.total_q} · soluzione</span>
     <div class="prob hprob" style="margin:3px 0;font-size:clamp(1.8rem,5vw,3.4rem)">${esc(pText(hq))} = <span style="color:var(--ok)">${fmt(pAns(hq))}</span>${so.remainder?` <span class="muted">resto ${so.remainder}</span>`:''}</div>
-    <div class="grid g2"><div class="card stack"><h3>Passaggi di Trachtenberg${hq.t==='ds'||hq.t==='df'?', da sinistra':hq.t==='ad'?': colonne e somma a L':', da destra'}${isTF(hq.t)?' · metodo a due dita':''}</h3><div class="log" style="max-height:none;color:var(--chalk)">${so.steps.map((s,i)=>`<div>${i+1}. ${esc(stepText(s))}</div>`).join('')}</div></div>
+    <div class="grid g2"><div class="card stack"><h3>Passaggi di Trachtenberg${isLTR(hq.t)?', da sinistra':hq.t==='ad'?': colonne e somma a L':hq.t==='q2'?': blocchi e riporti':', da destra'}${isTF(hq.t)?' · metodo a due dita':''}</h3><div class="log" style="max-height:none;color:var(--chalk)">${so.steps.map((s,i)=>`<div>${i+1}. ${esc(stepText(s))}</div>`).join('')}</div></div>
     <div class="card stack"><h3>Com'è andata</h3><div class="bars"><div class="b"><span>Giuste</span><i style="width:${st.right/tot*100}%;background:var(--ok)"></i><b class="mono">${st.right}</b></div><div class="b"><span>Sbagliate</span><i style="width:${st.wrong/tot*100}%;background:var(--coral)"></i><b class="mono">${st.wrong}</b></div><div class="b"><span>Senza risposta</span><i style="width:${none/tot*100}%;background:var(--muted)"></i><b class="mono">${none}</b></div></div>
     <h3>Classifica</h3><div id="hTop"></div></div></div>
     <div class="row" style="justify-content:center"><button class="btn y" id="hNext">${last?'Classifica finale':'Prossima domanda'}</button></div>`;
@@ -1869,7 +1988,7 @@ function gRender(force){
   else if(r.status==='ended')html=`<div class="card stack" style="text-align:center">${head}<div class="eyebrow">Partita finita</div><h1>${G.rank===1?'Hai vinto!':G.rank+'° posto'}</h1><p class="hclock">${p.score} punti</p><p>Giuste <b>${p.correct}</b> su ${p.answered} · ${G.np} giocatori</p><div class="row" style="justify-content:center"><button class="btn y" id="gLeave">Esci</button><a class="btn ghost" href="#solo">Allenati in Sfida solo</a></div></div>`;
   el.innerHTML=html;
   if($('gLeave'))$('gLeave').onclick=()=>{gReset();gJoinForm()};
-  if($('gKp')){const gq=r.mode==='live'?(r.cur_q||{t:r.cur_t}):(G.q||{});G.ans=new Answer($('gAns'),!(gq.t==='ds'||gq.t==='df'));keypad($('gKp'),gKey);keyTarget=gKey}
+  if($('gKp')){const gq=r.mode==='live'?(r.cur_q||{t:r.cur_t}):(G.q||{});G.ans=new Answer($('gAns'),!isLTR(gq.t));keypad($('gKp'),gKey);keyTarget=gKey}
   if(r.status==='ended'&&G.rank===1){sOk();setTimeout(sOk,250)}
   gTick();
 }
