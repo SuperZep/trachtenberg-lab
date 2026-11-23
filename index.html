@@ -2053,9 +2053,9 @@ function showQuote(done){
   const m=$('quoteModal');let i;do{i=Math.floor(Math.random()*CITAZIONI.length)}while(CITAZIONI.length>1&&i===P.lastQuote);
   P.lastQuote=i;save();const c=CITAZIONI[i];
   $('qText').textContent='“'+c.q+'”';$('qAuth').textContent='— '+c.a;
-  const bar=$('qBar');bar.style.animation='none';void bar.offsetWidth;bar.style.animation='';
+  const ms=Math.round(Math.min(8000,Math.max(3000,1000+c.q.length*55)));const bar=$('qBar');bar.style.animation='none';void bar.offsetWidth;bar.style.animation='';bar.style.animationDuration=ms+'ms';
   let shut=false;const close=()=>{if(shut)return;shut=true;clearTimeout(t);m.classList.remove('on');m.onclick=null;setTimeout(done,250)};
-  const t=setTimeout(close,3000);m.onclick=close;m.classList.add('on');
+  const t=setTimeout(close,ms);m.onclick=close;m.classList.add('on');
 }
 async function showWelcome(kind){showQuote(()=>showWelcome0(kind))}
 async function showWelcome0(kind){
